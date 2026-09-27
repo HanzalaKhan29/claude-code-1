@@ -10,7 +10,17 @@ npm run dev        # http://localhost:3000
 npm run build      # production build check
 ```
 
-Stack: Next.js 16 (App Router, fully static), Tailwind CSS v4, Motion, Phosphor icons. Fonts are self-hosted through `next/font` (Bricolage Grotesque, Geist, Geist Mono).
+Stack: Next.js 16 (App Router, static export to `out/`), Tailwind CSS v4, Motion, Phosphor icons. Fonts are self-hosted through `next/font` (Bricolage Grotesque, Geist, Geist Mono).
+
+## Deploy
+
+The site builds to a plain static folder (`out/`), so any host works:
+
+- **Netlify drag and drop:** run `npm run build`, then drag the `out` folder (or the ZIP of it) onto the project's **Deploys** page.
+- **Netlify from GitHub:** link this repo in the project's build settings. `netlify.toml` already sets the build command and publish folder.
+- **Vercel:** import the repo. It detects Next.js with no extra setup.
+
+Security and cache headers are in `public/_headers` (Netlify reads this file; on Vercel, move them to `vercel.json`).
 
 Every fact, price and link on the page lives in **`src/lib/content.ts`**. Change prices, Gumroad URLs, the launch deadline, recipes or FAQ there, not in the components.
 
