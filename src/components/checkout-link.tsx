@@ -3,35 +3,15 @@
 import { useEffect, useState } from "react";
 import { LINKS, PRICING } from "@/lib/content";
 import { useLaunch, money } from "@/lib/use-launch";
+import { approx, attribute, track } from "@/lib/tracking";
 
 type Plan = "starter" | "custom";
-
-declare global {
-  interface Window {
-    fbq?: (...args: unknown[]) => void;
-    ttq?: { track: (event: string, data?: Record<string, unknown>) => void };
-  }
-}
-
-const PASS_THROUGH = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
-
-/** Carries ad UTMs through to Gumroad so sales can be traced back to the ad that sent them. */
-function withUtm(base: string, search: string) {
-  if (!search) return base;
-  const incoming = new URLSearchParams(search);
-  const url = new URL(base);
-  for (const key of PASS_THROUGH) {
-    const v = incoming.get(key);
-    if (v && !url.searchParams.has(key)) url.searchParams.set(key, v);
-  }
-  return url.toString();
-}
 
 export function useCheckoutHref(plan: Plan) {
   const { active } = useLaunch();
   const base = plan === "custom" ? LINKS.custom : active ? LINKS.starterLaunch : LINKS.starterRegular;
   const [href, setHref] = useState<string>(base);
-  useEffect(() => setHref(withUtm(base, window.location.search)), [base]);
+  useEffect(() => setHref(attribute(base)), [base]);
   return href;
 }
 
@@ -48,17 +28,19 @@ export function CheckoutLink({
 }) {
   const href = useCheckoutHref(plan);
   const { price } = useLaunch();
-  const value = plan === "custom" ? PRICING.customPrice : price;
 
   return (
     <a
       href={href}
       className={className}
       data-placement={placement}
-      onClick={() => {
-        window.fbq?.("track", "InitiateCheckout", { value, currency: "USD", content_name: plan });
-        window.ttq?.track("InitiateCheckout", { value, currency: "USD", content_id: plan });
-      }}
+      onClick={() =>
+        track("InitiateCheckout", {
+          content_name: plan === "custom" ? "Solo & Starving? Custom Plan" : "Solo & Starving? The Interactive Cookbook",
+          value: plan === "custom" ? PRICING.customPrice : price,
+          currency: "USD",
+        })
+      }
     >
       {children}
     </a>
@@ -69,4 +51,14 @@ export function CheckoutLink({
 export function StarterPrice({ className = "" }: { className?: string }) {
   const { price } = useLaunch();
   return <span className={className}>{money(price)}</span>;
+}
+
+/** "about €17.71, charged in USD" for visitors outside the US. Renders nothing for US visitors. */
+export function LocalPrice({ plan = "starter", className = "" }: { plan?: Plan; className?: string }) {
+  const { price } = useLaunch();
+  const usd = plan === "custom" ? PRICING.customPrice : price;
+  const [text, setText] = useState("");
+  useEffect(() => setText(approx(usd)), [usd]);
+  if (!text) return null;
+  return <span className={className}>About {text}, charged in USD</span>;
 }

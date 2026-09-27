@@ -8,7 +8,7 @@ import { useLaunch } from "@/lib/use-launch";
 
 /**
  * Mobile buy bar. On phones the hero button sits below the photo, so the bar is there from first paint.
- * It hides whenever an in-page buy button is on screen (hero, pricing, final CTA) so there is never a double button.
+ * It hides whenever an in-page buy button is on screen (hero, quiz, pricing, final CTA) so there is never a double button.
  */
 export function StickyBuy() {
   const reduce = useReducedMotion();
@@ -18,7 +18,7 @@ export function StickyBuy() {
 
   useEffect(() => {
     setMounted(true);
-    const targets = ["hero-cta", "offer", "final-cta"]
+    const targets = ["hero-cta", "quiz", "offer", "final-cta"]
       .map((id) => document.getElementById(id))
       .filter(Boolean) as Element[];
     const visible = new Set<Element>();

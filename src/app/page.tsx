@@ -8,10 +8,21 @@ import {
   ShieldCheck,
   DownloadSimple,
   Lightning,
+  Gift,
+  Hamburger,
+  Timer,
+  BookOpenText,
+  Brain,
+  PiggyBank,
+  Globe,
+  LockKey,
+  Books,
 } from "@phosphor-icons/react/ssr";
-import { FAQ, LINKS, MODES, PRICING, RECIPES, RESEARCH, type Recipe } from "@/lib/content";
+import { DEMO_VIDEO, FAQ, LINKS, MODES, PRICING, REASONS, RECIPES, RESEARCH, RESEARCH_MORE, type Recipe } from "@/lib/content";
 import { LaunchBar, LaunchOnly, Countdown } from "@/components/launch-bar";
-import { CheckoutLink, StarterPrice } from "@/components/checkout-link";
+import { CheckoutLink, LocalPrice, StarterPrice } from "@/components/checkout-link";
+import { WeekPlans } from "@/components/week-plans";
+import { EmailCapture } from "@/components/email-capture";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { Quiz } from "@/components/quiz";
 import { Reveal } from "@/components/reveal";
@@ -27,14 +38,16 @@ export default function Page() {
         <Hero />
         <Facts />
         <Evening />
+        <Reasons />
         <HowItWorks />
         <Recipes />
+        <MonthPlan />
         <Research />
         <Bundle />
         <QuizSection />
         <Pricing />
-        <Fit />
         <Faq />
+        <NotReady />
         <FinalCta />
       </main>
       <Footer />
@@ -63,6 +76,7 @@ function Nav() {
         <div className="flex items-center gap-7">
           <ul className="hidden items-center gap-7 text-sm text-muted md:flex">
             <li><a className="transition-colors hover:text-cream" href="#recipes">Recipes</a></li>
+            <li><a className="transition-colors hover:text-cream" href="#plans">4 Week Plans</a></li>
             <li><a className="transition-colors hover:text-cream" href="#quiz">Quiz</a></li>
             <li><a className="transition-colors hover:text-cream" href="#offer">Pricing</a></li>
             <li><a className="transition-colors hover:text-cream" href="#faq">FAQ</a></li>
@@ -208,6 +222,79 @@ function Evening() {
   );
 }
 
+/* ---------------------------------------------------------------- reasons */
+
+const REASON_ICON = { gift: Gift, takeout: Hamburger, time: Timer, beginner: BookOpenText, decide: Brain, budget: PiggyBank };
+
+function Reasons() {
+  const not = ["You want slow, fancy, four hour recipes", "You mainly cook for a big family", "You want a printed hardcover book"];
+  return (
+    <section aria-labelledby="reasons-title" className="border-t border-line">
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:py-28">
+        <Reveal>
+          <h2 id="reasons-title" className="max-w-[20ch] font-display text-4xl font-bold leading-[1.02] tracking-[-0.03em] text-cream sm:text-5xl">
+            Whatever's making dinner hard tonight, it's covered.
+          </h2>
+          <p className="mt-4 text-lg text-muted">Six real reasons people open this on a Tuesday. Pick yours.</p>
+        </Reveal>
+        <ul className="mt-12 grid gap-px overflow-hidden rounded-card bg-line shadow-[inset_0_0_0_1px_var(--color-line)] sm:grid-cols-2 lg:grid-cols-3">
+          {REASONS.map((r, i) => {
+            const Icon = REASON_ICON[r.key];
+            return (
+              <li key={r.key} className="bg-ink">
+                <Reveal delay={(i % 3) * 0.05} className="h-full">
+                  <a
+                    href="#offer"
+                    className="group flex h-full flex-col gap-3 p-6 transition-colors hover:bg-surface sm:p-8"
+                  >
+                    <Icon size={26} weight="duotone" className="text-accent" aria-hidden />
+                    <span className="font-display text-xl font-semibold text-cream">{r.title}</span>
+                    <span className="text-muted">{r.line}</span>
+                    <span className="mt-auto pt-2 text-sm text-faint transition-colors group-hover:text-accent">
+                      {r.plan === "custom" ? "Best fit: the Custom Plan as a gift" : "Best fit: the Starter Bundle"}
+                    </span>
+                  </a>
+                </Reveal>
+              </li>
+            );
+          })}
+        </ul>
+        <Reveal className="mt-8 flex flex-col gap-3 text-sm text-muted sm:flex-row sm:flex-wrap sm:gap-x-8">
+          <span className="font-semibold text-cream">Probably not for you if</span>
+          {not.map((n) => (
+            <span key={n} className="flex items-center gap-2">
+              <X size={14} weight="bold" className="text-faint" aria-hidden />
+              {n}
+            </span>
+          ))}
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------------------------------------------------------- 4 week plans */
+
+function MonthPlan() {
+  return (
+    <section id="plans" aria-labelledby="plans-title" className="border-t border-line bg-night">
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:py-28">
+        <Reveal>
+          <h2 id="plans-title" className="max-w-[18ch] font-display text-4xl font-bold leading-[1.02] tracking-[-0.03em] text-cream sm:text-5xl">
+            A month of dinners, already decided.
+          </h2>
+          <p className="mt-4 max-w-[56ch] text-lg text-muted">
+            The free 4 Week Dinner Plans bonus. Every dinner picked, costed and in order, with a shopping list for each week.
+          </p>
+        </Reveal>
+        <Reveal className="mt-12">
+          <WeekPlans />
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 /* ---------------------------------------------------------------- how it works */
 
 function HowItWorks() {
@@ -236,6 +323,23 @@ function HowItWorks() {
             How it works
           </h2>
         </Reveal>
+        {DEMO_VIDEO.src && (
+          <Reveal className="mx-auto mt-12 w-full max-w-[300px] overflow-hidden rounded-[2rem] bg-ink shadow-[0_40px_80px_-30px_rgb(0_0_0/0.8),inset_0_0_0_1px_var(--color-line-strong)]">
+            <video
+              src={DEMO_VIDEO.src}
+              poster={DEMO_VIDEO.poster || undefined}
+              width={DEMO_VIDEO.width}
+              height={DEMO_VIDEO.height}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="none"
+              aria-label="Tapping through the Solo & Starving? cookbook on a phone"
+              className="block h-auto w-full"
+            />
+          </Reveal>
+        )}
         <ol className="mt-12 divide-y divide-line border-y border-line">
           {steps.map((s, i) => (
             <li key={s.verb}>
@@ -345,6 +449,15 @@ function Research() {
             </Reveal>
           ))}
         </div>
+        <div className="mt-12 grid gap-8 border-t border-line pt-10 md:grid-cols-3">
+          {RESEARCH_MORE.map((r, i) => (
+            <Reveal key={r.figure} delay={i * 0.05}>
+              <p className="font-display text-2xl font-bold tracking-tight text-cream">{r.figure}</p>
+              <p className="mt-2 text-sm text-muted">{r.body}</p>
+              <p className="mt-3 text-xs text-faint">{r.source}</p>
+            </Reveal>
+          ))}
+        </div>
         <Reveal className="mt-16 flex flex-col gap-4 rounded-card bg-surface p-6 shadow-[inset_0_0_0_1px_var(--color-line)] sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <p className="max-w-[60ch] text-cream">
             <span className="font-semibold">Made by Yassine &amp; Nourhene,</span>{" "}
@@ -414,7 +527,7 @@ function Bundle() {
               Get the cookbook
               <ArrowRight size={18} weight="bold" aria-hidden />
             </CheckoutLink>
-            <p className="text-sm text-faint">Works on phone, tablet and laptop.</p>
+            <p className="text-sm text-faint">Works on phone, tablet and laptop. No account needed.</p>
           </Reveal>
         </div>
       </div>
@@ -427,14 +540,15 @@ function Bundle() {
 function QuizSection() {
   return (
     <section id="quiz" aria-labelledby="quiz-title" className="border-t border-line">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16 lg:py-28">
+      <div className="quiz-wrap mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16 lg:py-28">
         <Reveal className="lg:pt-6">
+          <p className="quiz-entry-only mb-4 text-sm font-medium text-accent">Welcome in. Five quick questions, then your plan.</p>
           <h2 id="quiz-title" className="max-w-[14ch] font-display text-4xl font-bold leading-[1.02] tracking-[-0.03em] text-cream sm:text-5xl">
             What's your solo dinner type?
           </h2>
-          <p className="mt-5 max-w-[40ch] text-lg leading-relaxed text-muted">
-            Five quick questions. You get your starting mode, two recipes to cook first, and what takeout is really costing
-            you.
+          <p className="quiz-intro mt-5 max-w-[40ch] text-lg leading-relaxed text-muted">
+            Five quick questions. You get your dinner type, your starting week from the 4 Week Dinner Plans, and what takeout is
+            really costing you.
           </p>
         </Reveal>
         <Reveal delay={0.08}>
@@ -461,6 +575,7 @@ function Pricing() {
     "Built around your favorite cuisines and schedule",
     "Works around allergies and foods you won't eat",
     "Grocery prices adjusted to your country",
+    "One recipe you've always wanted to master, finally included",
     "Optional personal message page, great as a gift",
     "Written by a real person, emailed in 2 to 3 days",
   ];
@@ -490,7 +605,8 @@ function Pricing() {
               <StarterPrice className="font-display text-5xl font-bold tracking-tight text-cream" />
               <LaunchStrike />
             </p>
-            <ul className="mt-6 space-y-3 text-[15px]">
+            <LocalPrice className="mt-1 block text-sm text-faint" />
+            <ul className="mt-6 mb-8 space-y-3 text-[15px]">
               {starter.map((s) => (
                 <li key={s} className="flex gap-3 text-cream/90">
                   <Check size={18} weight="bold" className="mt-0.5 shrink-0 text-accent" aria-hidden />
@@ -498,7 +614,7 @@ function Pricing() {
                 </li>
               ))}
             </ul>
-            <CheckoutLink plan="starter" placement="pricing" className="btn btn-primary mt-8 w-full px-6 py-4 text-base">
+            <CheckoutLink plan="starter" placement="pricing" className="btn btn-primary mt-auto w-full px-6 py-4 text-base">
               Get the cookbook
               <ArrowRight size={18} weight="bold" aria-hidden />
             </CheckoutLink>
@@ -508,7 +624,8 @@ function Pricing() {
             <h3 className="font-display text-2xl font-semibold text-cream">The Custom Plan</h3>
             <p className="mt-1 text-muted">Built by hand around one person's life.</p>
             <p className="mt-6 font-display text-5xl font-bold tracking-tight text-cream">${PRICING.customPrice}</p>
-            <ul className="mt-6 space-y-3 text-[15px]">
+            <LocalPrice plan="custom" className="mt-1 block text-sm text-faint" />
+            <ul className="mt-6 mb-8 space-y-3 text-[15px]">
               {custom.map((s) => (
                 <li key={s} className="flex gap-3 text-cream/90">
                   <Check size={18} weight="bold" className="mt-0.5 shrink-0 text-accent" aria-hidden />
@@ -523,18 +640,22 @@ function Pricing() {
           </Reveal>
         </div>
 
-        <div className="mx-auto mt-10 grid max-w-5xl gap-6 text-sm text-muted sm:grid-cols-3">
+        <div className="mx-auto mt-10 grid max-w-5xl gap-6 text-sm text-muted sm:grid-cols-2 lg:grid-cols-4">
           <p className="flex gap-3">
             <Lightning size={18} weight="bold" className="shrink-0 text-accent" aria-hidden />
-            One-time payment through Gumroad. No subscription, no account.
+            Instant download. No account, nothing to install.
+          </p>
+          <p className="flex gap-3">
+            <LockKey size={18} weight="bold" className="shrink-0 text-accent" aria-hidden />
+            Secure one-time checkout through Gumroad. No subscription.
+          </p>
+          <p className="flex gap-3">
+            <Globe size={18} weight="bold" className="shrink-0 text-accent" aria-hidden />
+            Worldwide. Charged in USD, VAT may be added depending on your country.
           </p>
           <p className="flex gap-3">
             <ShieldCheck size={18} weight="bold" className="shrink-0 text-accent" aria-hidden />
             If a file won't open or something's off, we fix it, swap it, or make it right.
-          </p>
-          <p className="flex gap-3">
-            <EnvelopeSimple size={18} weight="bold" className="shrink-0 text-accent" aria-hidden />
-            VAT may be added at checkout depending on your country.
           </p>
         </div>
       </div>
@@ -549,53 +670,6 @@ function LaunchStrike() {
         <span className="line-through">${PRICING.regularPrice}</span> launch price
       </span>
     </LaunchOnly>
-  );
-}
-
-/* ---------------------------------------------------------------- fit */
-
-function Fit() {
-  const yes = [
-    "You cook for one, or mostly for yourself",
-    "You're a beginner, or seriously out of practice",
-    "You're a student or you work long days",
-    "You want real meals without the takeout bill",
-  ];
-  const no = ["You want slow, fancy, four hour recipes", "You mainly cook for a big family", "You want a printed hardcover book"];
-  return (
-    <section aria-labelledby="fit-title" className="border-t border-line">
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:py-28">
-        <Reveal>
-          <h2 id="fit-title" className="font-display text-4xl font-bold tracking-[-0.03em] text-cream sm:text-5xl">
-            Is this your kind of cookbook?
-          </h2>
-        </Reveal>
-        <div className="mt-12 grid gap-12 md:grid-cols-[1.4fr_1fr] md:gap-16">
-          <Reveal>
-            <p className="font-semibold text-cream">Yes, if</p>
-            <ul className="mt-4 space-y-4">
-              {yes.map((y) => (
-                <li key={y} className="flex gap-3 text-lg text-cream/90">
-                  <Check size={20} weight="bold" className="mt-1 shrink-0 text-accent" aria-hidden />
-                  {y}
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-          <Reveal delay={0.06}>
-            <p className="font-semibold text-muted">Probably not, if</p>
-            <ul className="mt-4 space-y-4">
-              {no.map((n) => (
-                <li key={n} className="flex gap-3 text-lg text-muted">
-                  <X size={20} weight="bold" className="mt-1 shrink-0 text-faint" aria-hidden />
-                  {n}
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -633,6 +707,35 @@ function Faq() {
             </details>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------------------------------------------------------- not ready */
+
+function NotReady() {
+  return (
+    <section aria-labelledby="notready-title" className="border-t border-line">
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:gap-20 lg:py-28">
+        <Reveal>
+          <h2 id="notready-title" className="max-w-[16ch] font-display text-4xl font-bold leading-[1.02] tracking-[-0.03em] text-cream sm:text-5xl">
+            Prefer to read first?
+          </h2>
+          <p className="mt-5 max-w-[48ch] text-lg leading-relaxed text-muted">
+            In-depth guides on cooking and eating alone, from grocery math to gift ideas, and yes, what to do with one lonely
+            chicken breast. Free to read, no email required.
+          </p>
+          <a href={LINKS.guides} className="btn btn-ghost mt-8 px-6 py-3.5 text-base">
+            <Books size={18} weight="bold" aria-hidden />
+            Browse the guide library
+          </a>
+        </Reveal>
+        <Reveal delay={0.06} className="rounded-card bg-surface p-6 shadow-[inset_0_0_0_1px_var(--color-line)] sm:p-8">
+          <p className="font-display text-2xl font-semibold text-cream">Or get one recipe free</p>
+          <p className="mt-2 mb-6 text-muted">Leave your email and we'll send you one recipe from the cookbook. No purchase needed.</p>
+          <EmailCapture />
+        </Reveal>
       </div>
     </section>
   );
@@ -685,6 +788,7 @@ function Footer() {
           <p className="mt-2">&copy; 2026 Y&amp;N Digital. Made by Yassine &amp; Nourhene.</p>
         </div>
         <ul className="flex flex-wrap gap-x-6 gap-y-2">
+          <li><a className="hover:text-cream" href={LINKS.guides}>Guides</a></li>
           <li><a className="hover:text-cream" href={LINKS.privacy}>Privacy</a></li>
           <li><a className="hover:text-cream" href={`mailto:${LINKS.email}`}>{LINKS.email}</a></li>
         </ul>
@@ -696,22 +800,66 @@ function Footer() {
 /* ---------------------------------------------------------------- schema */
 
 function StructuredData() {
+  const regions = ["US", "CA", "GB", "EU", "AU", "NZ"];
+  const offer = (price: string, url: string, handling: [number, number]) => ({
+    "@type": "Offer",
+    url,
+    priceCurrency: "USD",
+    price,
+    availability: "https://schema.org/InStock",
+    shippingDetails: {
+      "@type": "OfferShippingDetails",
+      shippingRate: { "@type": "MonetaryAmount", value: "0", currency: "USD" },
+      shippingDestination: regions.map((c) => ({ "@type": "DefinedRegion", addressCountry: c })),
+      deliveryTime: {
+        "@type": "ShippingDeliveryTime",
+        handlingTime: { "@type": "QuantitativeValue", minValue: handling[0], maxValue: handling[1], unitCode: "DAY" },
+        transitTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 0, unitCode: "DAY" },
+      },
+    },
+    hasMerchantReturnPolicy: {
+      "@type": "MerchantReturnPolicy",
+      returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+      applicableCountry: regions,
+    },
+  });
+  const brand = { "@type": "Brand", name: "Solo & Starving?" };
+  const maker = { "@type": "Organization", name: "Y&N Digital" };
   const data = [
     {
       "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "Y&N Digital",
+      url: "https://soloandstarving.store/",
+      logo: "https://soloandstarving.store/icon.png",
+      brand,
+      founder: [
+        { "@type": "Person", name: "Yassine" },
+        { "@type": "Person", name: "Nourhene" },
+      ],
+    },
+    { "@context": "https://schema.org", "@type": "WebSite", name: "Solo & Starving?", url: "https://soloandstarving.store/", inLanguage: "en" },
+    {
+      "@context": "https://schema.org",
       "@type": "Product",
-      name: "Solo & Starving? The Interactive Cookbook",
-      description: "88 beginner recipes for one, tagged by energy level, with 2 free planners. Interactive PDF.",
+      name: "Solo & Starving?: The Solo Starter Bundle",
+      description:
+        "An interactive PDF cookbook with 88 real dinner recipes for one, ready in 10 to 30 minutes, plus a free meal planner, grocery kit, and 4-week dinner plans.",
       image: "https://soloandstarving.store/og-image.jpg",
-      brand: { "@type": "Brand", name: "Y&N Digital" },
-      offers: {
-        "@type": "Offer",
-        price: PRICING.launchPrice.toFixed(2),
-        priceCurrency: "USD",
-        availability: "https://schema.org/InStock",
-        url: LINKS.starterLaunch,
-        priceValidUntil: PRICING.launchEndsAt.slice(0, 10),
-      },
+      brand,
+      manufacturer: maker,
+      offers: offer(PRICING.launchPrice.toFixed(2), "https://soloandstarving.store/", [0, 0]),
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: "Solo & Starving?: Customized Meal Plan",
+      description:
+        "A personal meal plan hand-built around your budget, schedule, allergies and taste, delivered as a PDF within 2 to 3 days of ordering.",
+      image: "https://soloandstarving.store/og-image.jpg",
+      brand,
+      manufacturer: maker,
+      offers: offer(String(PRICING.customPrice), "https://soloandstarving.store/#offer", [2, 3]),
     },
     {
       "@context": "https://schema.org",

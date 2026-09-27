@@ -141,3 +141,28 @@ details.faq[open]::details-content {
 details.faq summary::-webkit-details-marker {
   display: none;
 }
+
+/* Quiz-first entry for ad traffic (?quiz=1): the quiz moves above the hero, no flash, one instance. */
+main {
+  display: flex;
+  flex-direction: column;
+}
+html[data-entry="quiz"] #quiz {
+  order: -1;
+  border-top: 0;
+}
+html[data-entry="quiz"] .quiz-entry-only {
+  display: block;
+}
+.quiz-entry-only {
+  display: none;
+}
+@media (max-width: 1023px) {
+  html[data-entry="quiz"] #quiz .quiz-intro {
+    display: none;
+  }
+  html[data-entry="quiz"] #quiz .quiz-wrap {
+    padding-top: 1.75rem;
+    gap: 1.25rem;
+  }
+}

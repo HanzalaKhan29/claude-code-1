@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { TRACKING } from "@/lib/content";
+import { Consent } from "@/components/consent";
 
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -30,7 +32,11 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image", title, description, images: ["/og-image.jpg"] },
   alternates: { canonical: "/" },
+  other: { "p:domain_verify": TRACKING.pinterestVerify },
 };
+
+// Runs before first paint: ?quiz=1 links from ads and bio open straight into the quiz (same as the live site).
+const entryScript = `try{if(new URLSearchParams(location.search).get('quiz')==='1')document.documentElement.dataset.entry='quiz'}catch(e){}`;
 
 export const viewport: Viewport = {
   themeColor: "#0f1012",
@@ -39,8 +45,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${bricolage.variable} ${geist.variable} ${geistMono.variable}`}>
-      <body className="grain min-h-[100dvh]">{children}</body>
+    <html lang="en" className={`${bricolage.variable} ${geist.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: entryScript }} />
+      </head>
+      <body className="grain min-h-[100dvh]">
+        {children}
+        <Consent />
+      </body>
     </html>
   );
 }

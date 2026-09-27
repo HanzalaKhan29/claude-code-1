@@ -3,11 +3,31 @@
 
 export const LINKS = {
   starterLaunch: "https://hamzaouiy4.gumroad.com/l/Soloandstarving/LAUNCH45?wanted=true",
-  // Used automatically once the launch window closes. Confirm this URL with the owners.
+  // Used automatically once the launch window closes (same link the live site uses).
   starterRegular: "https://hamzaouiy4.gumroad.com/l/Soloandstarving?wanted=true",
   custom: "https://hamzaouiy4.gumroad.com/l/dmcajy",
   email: "yndigitalbusiness@gmail.com",
   privacy: "https://soloandstarving.store/privacy",
+  guides: "https://soloandstarving.store/guides/",
+  // Brevo (Sendinblue) list form used by the live site for the free-recipe email.
+  brevoForm:
+    "https://21cc7a47.sibforms.com/serve/MUIFAH5ssqTSs_52KaITdY9Q6490jdqj_ENxqTgJY_gClXZyRD7rKuV2jwCANAL7NB0j8KLOlhUvGoDQ_7KOp9z7ZXJazHj5GVt4WMfy6DXMQyuqdp92LHG9xc3XL5B4ZVEg3GCuOBiNzxcJDyfiTFojQUxcC8fNIan7PpGAM97AUTJsYfS9tl2EbEmlV4ommrE6txFnSU4Z4gD9VA==",
+} as const;
+
+/**
+ * Product demo loop for the "How it works" section. Leave src empty until you have a real
+ * screen recording of the PDF on a phone (see VIDEO-PLAN.md). Put files in public/video/.
+ */
+export const DEMO_VIDEO = {
+  src: "", // e.g. "/video/demo.mp4"
+  poster: "", // e.g. "/video/demo-poster.webp"
+  width: 1080,
+  height: 1920,
+} as const;
+
+export const TRACKING = {
+  metaPixelId: "1608472060834274",
+  pinterestVerify: "c41f2c6195ff1db46f167148c6c553a5",
 } as const;
 
 export const PRICING = {
@@ -175,6 +195,98 @@ export const RESEARCH = [
     source: "USDA Economic Research Service, Food Expenditure Series (2024)",
   },
 ] as const;
+
+export const RESEARCH_MORE = [
+  {
+    figure: "$3,945 vs $6,224",
+    body: "What the average US household spends a year eating out, and on groceries. Eating out doesn't replace home cooking, it stacks on top of it.",
+    source: "U.S. Bureau of Labor Statistics, Consumer Expenditure Survey (2024)",
+  },
+  {
+    figure: "Better diet, fewer calories",
+    body: "People who cook dinner at home more often eat a measurably healthier diet, whether or not they're trying to lose weight.",
+    source: "Wolfson & Bleich (2015), Public Health Nutrition",
+  },
+  {
+    figure: "60%",
+    body: "of UK food waste happens at home, more than farms, factories, shops and restaurants combined.",
+    source: "WRAP, UK Food Waste & Food Surplus (2023)",
+  },
+] as const;
+
+export const REASONS = [
+  { key: "gift", title: "Someone far away", line: "They moved out and can't cook. Hand them 88 recipes and a real starting point, no phone calls needed.", plan: "custom" },
+  { key: "takeout", title: "Tired of takeout", line: "The delivery app knows you too well. Homemade meals, with ingredients you actually choose.", plan: "starter" },
+  { key: "time", title: "No hour to spare", line: "Work, then nothing left. Every recipe fits inside 30 minutes, most take far less.", plan: "starter" },
+  { key: "beginner", title: "Never really learned", line: "A real Start Here guide: boiling pasta, knowing when chicken's done, what \"simmer\" means.", plan: "starter" },
+  { key: "decide", title: "Decision fatigue", line: "7pm, staring at the fridge again. With the 4 Week Dinner Plans it's already decided.", plan: "starter" },
+  { key: "budget", title: "Tight budget", line: "Groceries got expensive. Whole weeks planned around $2 a serving, not just single recipes.", plan: "starter" },
+] as const;
+
+/** The 4 Week Dinner Plans bonus, exactly as in the product. [day, recipe #, name, cuisine, minutes, cost per serving] */
+export type Dinner = [string, number, string, string, number, number];
+export const WEEKS: Record<1 | 2 | 3 | 4, { name: string; short: string; blurb: string; avg: number; d: Dinner[] }> = {
+  1: {
+    name: "Week 1: Budget Week",
+    short: "Budget Week",
+    blurb: "Seven dinners at about $2 a serving, built on beans, eggs, rice and pasta.",
+    avg: 2.11,
+    d: [
+      ["Mon", 59, "Japanese Curry Chicken Rice", "Japanese", 25, 2.45],
+      ["Tue", 68, "Tuscan White Bean Skillet", "Italian", 15, 1.5],
+      ["Wed", 45, "Loaded Black Bean Quesadilla", "Mexican", 10, 2.05],
+      ["Thu", 21, "One Pan Tuna Pasta Arrabbiata", "Italian", 20, 2.3],
+      ["Fri", 60, "Ginger Sesame Egg Fried Rice", "Japanese", 10, 1.4],
+      ["Sat", 11, "One Pan Lemon Chicken and Rice", "Mediterranean", 20, 2.5],
+      ["Sun", 13, "Shakshouka with Chickpeas and Feta", "Mediterranean", 20, 2.55],
+    ],
+  },
+  2: {
+    name: "Week 2: Low Energy Week",
+    short: "Low Energy Week",
+    blurb: "Nothing takes longer than 15 minutes. For the weeks when cooking feels like too much.",
+    avg: 3.06,
+    d: [
+      ["Mon", 1, "Harissa Lemon Chicken Pasta", "Mediterranean", 10, 3.45],
+      ["Tue", 43, "Egg and Black Bean Breakfast Burrito", "Mexican", 10, 2.65],
+      ["Wed", 52, "Buffalo Chicken Wrap", "American", 15, 3.2],
+      ["Thu", 2, "Tuna Feta Tomato Pasta", "Mediterranean", 10, 2.85],
+      ["Fri", 61, "Chicken Fried Rice", "Chinese", 15, 2.8],
+      ["Sat", 44, "Shrimp Fajita Bowl", "Mexican", 15, 3.8],
+      ["Sun", 62, "Beef and Broccoli Stir Fry", "Chinese", 15, 2.7],
+    ],
+  },
+  3: {
+    name: "Week 3: World Tour",
+    short: "World Tour Week",
+    blurb: "A different cuisine every night, from Mediterranean to Mexican, Japanese, Chinese and Italian.",
+    avg: 3.25,
+    d: [
+      ["Mon", 22, "Lemon Chickpea Chicken Bowls", "Mediterranean", 20, 3.2],
+      ["Tue", 47, "Turkey Taco Bowl", "Mexican", 20, 3.45],
+      ["Wed", 55, "Teriyaki Chicken Rice Bowl", "Japanese", 20, 2.75],
+      ["Thu", 63, "Sweet Chili Shrimp Noodles", "Chinese", 15, 3.05],
+      ["Fri", 70, "Italian Style Turkey and Peppers", "Italian", 20, 2.9],
+      ["Sat", 53, "Classic Beef Burger Bowl", "American", 15, 3.1],
+      ["Sun", 33, "One Pan Salmon Lemon Rice", "Mediterranean", 30, 4.3],
+    ],
+  },
+  4: {
+    name: "Week 4: Comfort Week",
+    short: "Comfort Week",
+    blurb: "Cozy, filling dinners for a week when you have a bit more energy.",
+    avg: 3.17,
+    d: [
+      ["Mon", 49, "Turkey Chili", "American", 25, 3.1],
+      ["Tue", 50, "BBQ Chicken Loaded Potato", "American", 30, 2.7],
+      ["Wed", 69, "Baked Ziti Skillet", "Italian", 25, 3.6],
+      ["Thu", 32, "Chicken Chickpea Tomato Stew", "Mediterranean", 30, 2.8],
+      ["Fri", 51, "Cheesy Chicken Broccoli Rice", "American", 20, 2.85],
+      ["Sat", 34, "Spicy Beef and Tomato Orzo", "Italian", 30, 3.65],
+      ["Sun", 31, "Mediterranean Turkey Meatball Pitas", "Mediterranean", 30, 3.5],
+    ],
+  },
+};
 
 export const FAQ = [
   {
