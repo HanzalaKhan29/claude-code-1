@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""Second listening pass: transcribe the RENDER and diff it against the words you meant to keep.
+
+Catches what frame checks cannot: clipped word starts/ends, "ghost" syllables from a cut landing inside a
+word, missing words, and audio drifting against the planned timeline (lip-sync or caption sync problems).
+
+Usage:
+  python3 verify_cut.py <render.mp4> <words_cut.json> [--render-words render_words.json] [--model small]
+--render-words skips transcription if you already transcribed the render (transcribe.py --out ...).
+Exit code 1 when problems are found, so it can gate delivery.
+"""
+import argparse
+import difflib
+import os
+import re
+import subprocess
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _common import read_json, write_json  # noqa: E402
+
+
+def norm(t):
+    return re.sub(r"[^\w']+", "", t.lower())
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("render")
+    ap.add_argument("planned")
+    ap.add_argument("--render-words")
+    ap.add_argument("--model", default="small")
+    ap.add_argument("--language", default="auto")
+    ap.add_argument("--drift-ms", type=float, default=120, help="flag words whose timing moved more than this")
+    args = ap.parse_args()
+
+    planned = read_json(args.planned)
+    if args.render_words:
+        heard = read_json(args.render_words)
+    else:
+        out = os.path.join(os.path.dirname(os.path.abspath(args.render)), "verify")
+        here = os.path.dirname(os.path.abspath(__file__))
+        subprocess.run([sys.executable, os.path.join(here, "transcribe.py"), args.render, "--out", out,
+                        "--model", args.model, "--language", args.language, "--verbatim"], check=True)
+        heard = read_json(os.path.join(out, "words.json"))
+
+    a = [norm(w["text"]) for w in planned]
+    b = [norm(w["text"]) for w in heard]
+    sm = difflib.SequenceMatcher(a=a, b=b, autojunk=False)
+    problems, drifts = [], []
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        if tag == "equal":
+            for k in range(i2 - i1):
+                d = (heard[j1 + k]["start"] - planned[i1 + k]["start"]) * 1000
+                if abs(d) > args.drift_ms:
+                    drifts.append({"word": planned[i1 + k]["text"], "planned": planned[i1 + k]["start"],
+                                   "heard": heard[j1 + k]["start"], "drift_ms": round(d)})
+            continue
+        problems.append({
+            "type": {"delete": "missing in render", "insert": "extra/ghost in render", "replace": "changed"}[tag],
+            "planned": " ".join(w["text"] for w in planned[i1:i2]),
+            "heard": " ".join(w["text"] for w in heard[j1:j2]),
+            "at": round((heard[j1]["start"] if j1 < len(heard) else (planned[i1]["start"] if i1 < len(planned)
+                                                                   else 0)), 2),
+        })
+    match = sm.ratio()
+    report = {"match_ratio": round(match, 3), "problems": problems, "timing_drifts": drifts[:50]}
+    write_json(report, os.path.splitext(args.render)[0] + ".verify.json")
+    print(f"Word match {match:.1%}; {len(problems)} differences; {len(drifts)} words drifted > {args.drift_ms:.0f} ms")
+    for p in problems[:25]:
+        print(f"  @{p['at']}s {p['type']}: planned '{p['planned']}' heard '{p['heard']}'")
+    if drifts:
+        worst = max(drifts, key=lambda d: abs(d["drift_ms"]))
+        print(f"  worst drift: '{worst['word']}' {worst['drift_ms']} ms (planned {worst['planned']}s)")
+    print("ASR is imperfect: listen at each flagged time before re-cutting. Real clipped words usually show as "
+          "'changed' or 'missing' right next to a cut point.")
+    sys.exit(1 if (problems and match < 0.97) or len(drifts) > 3 else 0)
+
+
+if __name__ == "__main__":
+    main()

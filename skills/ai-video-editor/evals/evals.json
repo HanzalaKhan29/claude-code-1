@@ -1,0 +1,23 @@
+{
+  "skill_name": "ai-video-editor",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I recorded a quick talking-head clip for YouTube (talk.mp4). Cut out the ums, the sentence I restarted and the dead air, then give me a vertical 9:16 Short version with bold viral captions where the important word turns yellow. The word-level transcript is already in words.json (Whisper can't download models on this machine).",
+      "expected_output": "A rough cut without fillers/retake/dead air, a 1080x1920 version, burned-in viral captions inside the safe zone with meaning-chosen key words, QA run and frames inspected, honest report.",
+      "files": ["inputs/talk.mp4", "inputs/words.json"]
+    },
+    {
+      "id": 2,
+      "prompt": "here's a video from a creator whose editing i love (creator_ref.mp4). break down their editing style so i can copy it on my own videos: pacing, cuts, captions, colors, everything. give me a style card i can reuse",
+      "expected_output": "Measured style card (cuts/min, shot lengths, cut types, caption font/case/size/position/highlight, palette hex, loudness) with reasons, flags single-video limitation, asks for confirmation.",
+      "files": ["inputs/creator_ref.mp4"]
+    },
+    {
+      "id": 3,
+      "prompt": "Make me an animated stat card for my YouTube video: 'We grew from 1,200 to 48,000 subscribers in 9 months'. Clean premium look, 16:9, about 5 seconds, transparent background so I can drop it over my talking head footage. Actually render it. (GSAP CDN is blocked here; a local gsap.min.js is in inputs/.)",
+      "expected_output": "A rendered transparent MOV/WebM 1920x1080 ~5s, counter with tabular numbers, one accent, deterministic HyperFrames composition, frames inspected, lint clean.",
+      "files": ["inputs/gsap.min.js"]
+    }
+  ]
+}
