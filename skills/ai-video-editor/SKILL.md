@@ -50,6 +50,8 @@ Ask one question at a time and wait (use the AskUserQuestion tool when available
 
 Write the answers to `EDIT_STATE.md` as the brief.
 
+**Fast path for a single graphic** (one stat card, title, lower third, no footage edit): ask only what changes the result: where the speaker's face sits in frame (so the graphic avoids it), brand colours or a Look, the frame rate of their footage, and the exact words/numbers. Then build, render, check, deliver. No storyboard approval round for one card.
+
 ## 3. Learn the style by measuring, not by vibes
 
 If the user named a creator, follow `references/style-reverse-engineering.md`. In short:
@@ -110,7 +112,7 @@ Rules for the plan (each one exists because breaking it costs viewers):
 - the production-spec layer that makes code-animated video look premium (from 513 real prompts): duration, fps, palette, fonts, a locked copy list, a timestamped beat grid, easing tokens, a ban list, a deterministic `seek(t)` contract, and a frame-review gate;
 - how to pick a Look from `references/looks-library.md` (20 ready art directions with hex codes and fonts).
 
-Two ways to get graphics onto footage: put the edited video inside the composition (one render, best for heavy packaging), or render each graphic as a transparent `.mov` (`npx hyperframes render . --format mov`) and place it at its spoken word with `python3 scripts/overlay.py renders/v1.mp4 work/graphics.json renders/v2.mp4`. A tested lower-third starter lives in `assets/hyperframes/`.
+Two ways to get graphics onto footage: put the edited video inside the composition (one render, best for heavy packaging), or render each graphic as a transparent `.mov` (`npx hyperframes render . --format mov`) and place it at its spoken word with `python3 scripts/overlay.py renders/v1.mp4 work/graphics.json renders/v2.mp4`. Tested starters (lint- and check-clean, transparent) live in `assets/hyperframes/`: `lower-third/` and `stat-counter/` (seek-safe counter with fixed-width digits). Check every rendered graphic with `python3 scripts/qa_graphic.py <file.mov>` (fully transparent first/last frame, no single-frame pops, legibility sheets over black/white/grey).
 
 Render each graphic, then **look at frames** (`npx hyperframes snapshot <dir> --at <t>`), fix, and only then render final. Captions always go on last, above every graphic.
 
@@ -169,7 +171,7 @@ Full, sourced versions: `references/design-science.md`. Short versions you shoul
 - **Type:** at most 2 families and 3 weights per video. Track ALL CAPS +5 to +12%; tighten big display type -1 to -3%. No weight under 400 below 60 px at 1080p (thin strokes smear after YouTube compression). Use tabular numbers on counters.
 - **Colour:** exactly one accent hue, covering 10% of the frame or less. Text needs a luminance difference (stroke 2 to 4 px, soft shadow, or scrim), not just a different hue. Keep skin on the skin-tone line; run LUTs at 40 to 80%.
 - **Motion:** entrances decelerate (`cubic-bezier(0.16,1,0.3,1)`), exits accelerate and run about 20% faster, on-screen moves ease in-out. One hero moves at a time. Stagger 40 to 80 ms per item, total under 600 ms. Overshoot 0 to 3% for professional work, never elastic or bounce on text. No idle floating or breathing; if a scene runs out of things to do, add story, not wobble. Never more than 3 flashes per second.
-- **Default ban list** (allow only if the user asks): particles, glows, lens flares, shockwave rings, camera shake, bouncy easing, purple-blue "AI" gradients, glassmorphism everywhere, emoji as icons, gradient text, typewriter on long sentences, crossfades between scenes, spinning logos, generic stock B-roll, text parked in corners, dead holds longer than 1 s.
+- **Default ban list** (allow only if the user asks): particles, glows, lens flares, shockwave rings, camera shake, bouncy easing, purple-blue "AI" gradients, glassmorphism everywhere, emoji as icons, gradient text, typewriter on long sentences, crossfades between scenes, spinning logos, generic stock B-roll, text parked in corners, dead holds longer than 1 s (a still read-hold after a climax is not a dead hold: give the landed number or final line `words x 0.3 s + 0.5 s`).
 
 ## 10. How to report back
 
@@ -191,7 +193,7 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | `references/tooling-research.md` | verified ffmpeg recipes, transcription engines (incl. Hindi), auto-editor, other public video skills, asset licences |
 | `references/qa-checklist.md` | the pre-delivery checklist |
 | `assets/style-card-template.md`, `assets/edit-state-template.md`, `assets/learned-rules.md` | style card to fill; project state file; rules learned from the user's notes |
-| `assets/hyperframes/` | tested transparent lower-third starter |
+| `assets/hyperframes/` | tested transparent starters: lower-third, stat-counter |
 
 ## Scripts (all standard-library Python + ffmpeg; run with `--help` for options)
 
@@ -206,6 +208,7 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | `verify_cut.py` | second listening pass on the render: clipped/ghost words, drift |
 | `reframe.py` | 16:9 to 9:16 / 4:5 / 1:1, face-centred or blurred fit |
 | `overlay.py` | composites HyperFrames graphics (alpha MOV/WebM) or cutaways at their words |
+| `qa_graphic.py` | QA for a rendered graphic: alpha present, clear first/last frame, pops, legibility sheets |
 | `fetch_fonts.py` | downloads Google Fonts TTFs for captions and graphics |
 | `captions.py` | 10 caption styles as word-timed ASS + SRT, optional burn-in |
 | `finish.py` | voice clean-up, music bed with ducking, SFX, two-pass -14 LUFS, platform encode |

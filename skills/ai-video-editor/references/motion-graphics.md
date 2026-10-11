@@ -22,7 +22,7 @@ npx hyperframes skills update            # installs HeyGen's core skills (router
 npx hyperframes skills update talking-head-recut motion-graphics embedded-captions faceless-explainer
 ```
 
-Skills load at the start of a thread: tell the user to open a new thread after installing. When the official skills are present, **follow them for the composition mechanics** (they are maintained with the CLI and change between versions) and use this file for taste, planning and the editor workflow around them. Route like this:
+Skills load at the start of a thread: tell the user to open a new thread after installing. If `skills update` fails (restricted network, GitHub blocked), do not stall: build with the fallback contract in section 4 and the starters in `assets/hyperframes/`. When the official skills are present, **follow them for the composition mechanics** (they are maintained with the CLI and change between versions) and use this file for taste, planning and the editor workflow around them. Route like this:
 
 | Deliverable | Official workflow |
 |---|---|
@@ -41,6 +41,8 @@ Gotchas verified while building this skill:
 - A composition with no registered timeline waits 45 s per render: add `data-no-timeline` for static ones.
 - Source footage with sparse keyframes freezes on seek. `probe.py` warns; re-encode with `-g <fps> -keyint_min <fps>` (render_cut.py output already does this).
 - Transparent WebM keeps alpha only when ffmpeg decodes it with `-c:v libvpx-vp9` (overlay.py handles it). ProRes 4444 `.mov` is the safest alpha format.
+- MOV/WebM renders print "BeginFrame did not run ... screenshot capture (slower)": harmless, transparent formats use screenshot capture (a 5 s card took about 40 s).
+- `snapshot --at` also adds an end frame unless you pass `--no-end`; files are numbered in capture order, not time order.
 
 ## 3. Two ways to put graphics on footage
 
@@ -73,6 +75,17 @@ Rules that `lint` enforces or that fail silently:
 - Named `font-family` needs a local `@font-face`. List concrete font names on `body` (the font checker does not expand CSS variables).
 - Determinism: no `Math.random()` (use a seeded PRNG), no `Date.now()`, no timers, no network, no CSS transitions or keyframes driven by wall-clock time; `repeat: -1` only under a finite root duration. Every frame must be a pure function of time.
 - Animate `transform` and `opacity` for motion; animate the wrapper of a video, never the video element's size.
+- **Mask reveals** (text rising through an `overflow:hidden` line) make `check` report `text_occluded`. The occlusion is intended: put `data-layout-allow-occlusion` on **every text node inside the mask** (including `<b>`, and spans you generate in JS), and `data-layout-allow-overflow data-layout-allow-occlusion` on the mask itself. Both starters do this.
+- **Counters must be seek-safe.** The renderer seeks to arbitrary times, and `onUpdate` callbacks may not fire on a seek. Tween a property on a plain object with a setter that writes the text, so every frame is a pure function of time:
+  ```js
+  let _v = START; const counter = {};
+  Object.defineProperty(counter, "value", { get() { return _v; },
+    set(v) { _v = v; numEl.textContent = Math.round(v).toLocaleString("en-US"); } });
+  tl.fromTo(counter, { value: START }, { value: END, duration: 1.5, ease: "power3.out" }, 0.95);
+  ```
+  Digits must not jitter while counting: Google's static TTFs do not always expose the `tnum` feature, so give every digit a fixed-width slot (`.d { display:inline-block; width:0.62em; text-align:center }`, see `assets/hyperframes/stat-counter/`) or use a mono figure font (JetBrains Mono, Geist Mono).
+- **Overlays must start and end fully transparent** (finish exits at least 0.2 s before the end), or the card pops on or off at the cut. `scripts/qa_graphic.py` checks this.
+- **Contrast on transparent overlays:** `check` reports "0/0 text checks" because there is no background to measure. Judge it with `scripts/qa_graphic.py` sheets (over black, white and grey); if text fails on any of them, strengthen the plate or shadow.
 - Workflow: `npx hyperframes lint .` then `npx hyperframes check .` (0 findings; a lint error silently disables the layout and contrast audits) then `npx hyperframes snapshot . --at 0.5,1.5,3` and LOOK, then `npx hyperframes render . -o out.mp4` (or `--format mov` for alpha).
 
 ## 5. Card planning for talking heads
@@ -100,6 +113,8 @@ Layouts (16:9 canvas 1920x1080; for 9:16 see talking-head-recut's layout files):
 Portrait sizing: phones hold the screen close, so scale every landscape type size by about x1.3 for 9:16 (hero titles 88-132 px, body 30-40 px, labels 18-22 px, key numbers 64-88 px) and shrink horizontal padding to 24-36 px.
 
 Every card: real words from the transcript, appears on its spoken word (within about 150 ms), one idea, readable hold (`words x 0.3 s + 0.5 s`, minimum 1.2 s).
+
+Placement offset: "land on the word" refers to the meaningful moment, not frame 0 of the graphic. For a counter, the number should land as the speaker says it, so `at = word_time - (time inside the graphic when the count lands)`. For a card that builds in 0.4 s, start it about 0.3 s before the word so the text is readable as the word is spoken.
 
 ## 6. Motion doctrine (why premium motion feels like one camera move)
 
@@ -205,6 +220,8 @@ Pacing: explainer scenes 3-6 s; narrated pieces change something about every 1.5
 6. Fast motion with no motion blur strobes: for moves over about 2-3% of frame width per frame, render 4-8 subframes and average them, or keep the move slower.
 
 ## 13. Conflicts between sources, resolved
+
+- **"No dead holds over 1 s" vs "hold long enough to read":** a dead hold is a stretch where nothing new appears and there is nothing left to read. A read hold after a climax (the landed number, the final lockup) is required: `words x 0.3 s + 0.5 s`, typically 1.5-2.5 s, with everything still.
 
 - **Idle "breathing" motion:** one Remotion skill says idle elements should breathe; HyperFrames' doctrine bans idle wobble. This skill follows the ban: a hold should either be still (readable) or advance the story. A subtle Ken Burns on a still photo (scale about 1.0 to 1.08 over the shot) is camera intent, not wobble, and is fine.
 - **Italic emphasis:** HyperFrames caption rules ban italics for emphasis in motion; Sankhla's styles 2, 4, 5 use italic serif key words. Keep italic serif as a deliberate editorial style for single words held at least 0.6 s; never italicise running text.

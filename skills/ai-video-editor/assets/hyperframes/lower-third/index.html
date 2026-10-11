@@ -2,6 +2,7 @@
 <!--
   Lower-third overlay (transparent). Render:  npx hyperframes render . --format mov -o lower-third.mov
   Then place it with scripts/overlay.py at the spoken word. Edit only the CONTENT and BRAND blocks.
+  Mask reveals clip text on purpose: every text node carries data-layout-allow-occlusion so `check` passes.
   Contract notes (HyperFrames core): one paused GSAP timeline registered under the root composition id;
   fonts via local @font-face; no CSS transform on elements GSAP moves (use fromTo); nothing random or clock-based.
 -->
@@ -34,8 +35,8 @@
         <div id="bar" class="bar"></div>
         <div class="text">
           <!-- CONTENT: use the speaker's real name/role, never invented -->
-          <span class="mask"><span id="name" class="name">Speaker Name</span></span>
-          <span class="mask"><span id="role" class="role">Role, Company</span></span>
+          <span class="mask" data-layout-allow-overflow data-layout-allow-occlusion><span id="name" class="name" data-layout-allow-occlusion>Speaker Name</span></span>
+          <span class="mask" data-layout-allow-overflow data-layout-allow-occlusion><span id="role" class="role" data-layout-allow-occlusion>Role, Company</span></span>
         </div>
       </div>
     </div>
@@ -47,11 +48,11 @@
         .fromTo("#bar", { scaleY: 0, transformOrigin: "50% 100%" }, { scaleY: 1, duration: 0.35, ease: ENTER }, 0.0)
         .fromTo("#name", { yPercent: 110 }, { yPercent: 0, duration: 0.55, ease: ENTER }, 0.18)
         .fromTo("#role", { yPercent: 110 }, { yPercent: 0, duration: 0.55, ease: ENTER }, 0.26)
-        // exit: reverse order, faster, same axis it came from
-        .to("#role", { yPercent: 110, duration: 0.32, ease: EXIT }, 4.4)
-        .to("#name", { yPercent: 110, duration: 0.32, ease: EXIT }, 4.46)
-        .to("#plate", { scaleX: 0, duration: 0.36, ease: EXIT }, 4.56)
-        .to("#bar", { scaleY: 0, duration: 0.3, ease: EXIT }, 4.62);
+        // exit: reverse order, faster, same axis it came from; fully clear >= 0.2 s before the end (no pop at the cut)
+        .to("#role", { yPercent: 110, duration: 0.32, ease: EXIT }, 4.25)
+        .to("#name", { yPercent: 110, duration: 0.32, ease: EXIT }, 4.31)
+        .to("#plate", { scaleX: 0, duration: 0.36, ease: EXIT }, 4.41)
+        .to("#bar", { scaleY: 0, duration: 0.3, ease: EXIT }, 4.47);
       window.__timelines["lower-third"] = tl;
     </script>
   </body>

@@ -1,7 +1,9 @@
 # HyperFrames starters
 
+`stat-counter/index.html` is a transparent stat card with a seek-safe counter and fixed-width digits (example numbers: replace them). Fonts: `fetch_fonts.py "Manrope:500,800" --dir <project>/fonts`. Same workflow as below.
+
 `lower-third/index.html` is a transparent lower-third overlay (1920x1080, 5 s) that follows the HyperFrames
-core contract and the motion rules in `references/motion-graphics.md`. Lint-clean and render-tested with
+core contract and the motion rules in `references/motion-graphics.md`. Both pass `hyperframes lint` and `check` and were render-tested with
 HyperFrames 0.8.147.
 
 Use:
