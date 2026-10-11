@@ -26,10 +26,18 @@ Styles (font size is % of frame height; body captions about 4-5%):
   8 karaoke        bold sans, words light up as spoken (active = accent), 3-5 words
   9 hindi          Devanagari-safe bold sans (Noto Sans Devanagari), white + outline
  10 minimal        sentence case medium sans, 1-2 lines, soft shadow (long-form YouTube)
+ 11 kinetic        motion-reels two-tier type: small lowercase whisper words revealed one by one at centre,
+                   key words alone as APEX words (Anton caps ~18% of frame height, one accent). Use with
+                   --selective and a keywords file. Pairs with HyperFrames graphics.
+ 12 feed           typewriter feed: the active line bright at centre, previous/next lines dimmed above/below
 Any field can be overridden with --style-json card.json (e.g. the creator's measured style card).
 Lines never exceed the safe width: groups break before a word that would overflow, then shrink to fit.
 The SRT is accessibility-grade by default (sentence case, punctuation, <=42 chars x 2 lines, <=20 cps);
 --srt-mode design writes the burned-in groups instead.
+
+--selective captions only the beats (the editorial default for motion reels, not for talking-head Shorts):
+groups holding a key word or a number, plus the setup words right before a solo key word. It prints the
+share of words captioned; aim for 25-40%. The SRT sidecar stays complete either way (accessibility).
 """
 import argparse
 import os
@@ -48,6 +56,8 @@ BASE = {
     "box_pad_pct": 0.9, "max_words": 4, "max_chars_line": 22, "lines": 1, "anim": "fade", "tracking": 0.0,
     "key_font": None, "key_italic": False, "key_weight": None, "key_color": None, "key_size_mul": 1.0,
     "active_bold": False, "drop_punct": True, "char_w": 0.42, "fonts": ["Inter:800"],
+    "key_case": None, "key_size_pct": None, "key_char_w": None, "key_solo": False, "reveal": None,
+    "context": False, "y": None,
 }
 
 # char_w = average glyph advance per ASS font-size unit, measured with libass on the real fonts
@@ -80,6 +90,13 @@ STYLES = {
                   max_words=4, max_chars_line=20, anim="fade", char_w=0.34, fonts=["Noto Sans Devanagari:700"]),
     "minimal": dict(font="Inter", weight=600, case="asis", size_pct=3.6, shadow_pct=0.3, max_words=9,
                     max_chars_line=38, lines=2, anim="fade", drop_punct=False, fonts=["Inter:600"]),
+    # key_size_pct is the FONT size; Anton capitals are only ~50% of it in libass, so 36 -> ~18% cap height
+    "kinetic": dict(font="Inter", weight=700, case="lower", size_pct=4.4, shadow_pct=0.25, max_words=3,
+                    max_chars_line=18, anim="cut", reveal="word", key_font="Anton", key_weight=400,
+                    key_case="upper", key_size_pct=36, key_char_w=0.27, key_solo=True, key_color="#DDF53D",
+                    char_w=0.40, y=0.50, fonts=["Inter:700", "Anton:400"]),
+    "feed": dict(font="Inter", weight=800, case="asis", size_pct=4.2, shadow_pct=0.2, max_words=5,
+                 max_chars_line=26, anim="cut", context=True, upcoming=None, y=0.50, fonts=["Inter:800"]),
 }
 IDS = {str(i + 1): k for i, k in enumerate(STYLES)}
 FUNCTION_WORDS = {"a", "an", "the", "to", "of", "in", "on", "at", "for", "with", "and", "or", "but", "is", "are",
@@ -132,7 +149,7 @@ def clean_word(t, cfg):
     t = t.strip()
     if cfg["drop_punct"]:
         t = re.sub(r"[,.;:]+$", "", t)
-        t = t.replace("—", "").replace("–", "")
+        t = t.replace("\u2014", "").replace("\u2013", "")  # strip em/en dashes from caption text
     if cfg["case"] == "upper":
         t = t.upper()
     elif cfg["case"] == "lower":
@@ -146,13 +163,17 @@ def text_width(texts, cfg, fs):
     return chars * fs * cfg["char_w"] + max(0, len(texts) - 1) * fs * 0.28 + chars * cfg["tracking"]
 
 
-def group_words(words, cfg, fs, max_w):
+def group_words(words, cfg, fs, max_w, keyids=frozenset()):
     """Break on breaths (>=250 ms), sentence ends, comma pauses, and BEFORE a word that would exceed the word
     count or the safe width. Never leave a function word (a, the, to...) dangling at the end of a group."""
     groups, cur = [], []
     limit_w = max_w * cfg["lines"]
     for i, w in enumerate(words):
         t = clean_word(w["text"], cfg)
+        solo = cfg["key_solo"] and id(w) in keyids
+        if cur and solo:  # an apex word stands alone: close whatever came before it
+            groups.append(cur)
+            cur = []
         if cur and (len(cur) + 1 > cfg["max_words"] or
                     text_width([clean_word(x["text"], cfg) for x in cur] + [t], cfg, fs) > limit_w or
                     sum(len(clean_word(x["text"], cfg)) + 1 for x in cur) + len(t) > cfg["max_chars_line"] * cfg["lines"]):
@@ -164,7 +185,7 @@ def group_words(words, cfg, fs, max_w):
         cur.append(w)
         nxt = words[i + 1] if i + 1 < len(words) else None
         raw = w["text"].rstrip()
-        if (nxt is None or nxt["start"] - w["end"] >= 0.25 or raw.endswith((".", "?", "!", "।"))
+        if (solo or nxt is None or nxt["start"] - w["end"] >= 0.25 or raw.endswith((".", "?", "!", "।"))
                 or (raw.endswith(",") and nxt["start"] - w["end"] >= 0.15)):
             groups.append(cur)
             cur = []
@@ -172,7 +193,8 @@ def group_words(words, cfg, fs, max_w):
         groups.append(cur)
     merged = []
     for g in groups:
-        if merged and (g[-1]["end"] - g[0]["start"] < 0.5) and len(merged[-1]) + len(g) <= cfg["max_words"] \
+        is_solo = cfg["key_solo"] and any(id(x) in keyids for x in g + (merged[-1] if merged else []))
+        if merged and not is_solo and (g[-1]["end"] - g[0]["start"] < 0.5) and len(merged[-1]) + len(g) <= cfg["max_words"] \
                 and g[0]["start"] - merged[-1][-1]["end"] < 0.25 and \
                 text_width([clean_word(x["text"], cfg) for x in merged[-1] + g], cfg, fs) <= limit_w:
             merged[-1].extend(g)
@@ -214,7 +236,7 @@ def srt_ts(t):
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 
-def word_markup(text, role, is_key, cfg, H, pop_in, mode, scale_fit):
+def word_markup(text, role, is_key, cfg, H, pop_in, mode, scale_fit, alpha=None):
     """Every word carries a complete tag set (no \\r resets, which would cancel line-level animation).
     role: spoken | active | upcoming (or 'static' when the group is not stepped word by word)."""
     color = cfg["primary"]
@@ -232,6 +254,10 @@ def word_markup(text, role, is_key, cfg, H, pop_in, mode, scale_fit):
         weight = 800
     mul = cfg["key_size_mul"] if (is_key and mode != "none") else 1.0
     size = round(cfg["size_pct"] / 100 * H * mul * scale_fit)
+    if is_key and mode != "none" and cfg["key_size_pct"]:
+        size = round(cfg["key_size_pct"] / 100 * H * scale_fit)
+    if alpha is None:
+        alpha = "FF" if (role == "upcoming" and cfg["reveal"] == "word") else "00"
     target = 110 if (lit and cfg["anim"] == "pop" and role == "active") else 100
     if pop_in:
         scale = (f"\\fscx{round(target * 0.82)}\\fscy{round(target * 0.82)}"
@@ -240,7 +266,9 @@ def word_markup(text, role, is_key, cfg, H, pop_in, mode, scale_fit):
     else:
         scale = f"\\fscx{target}\\fscy{target}"
     fname, bold = ass_font(font, weight)
-    return "{" + f"\\1c{ass_color(color)}\\fn{fname}\\b{bold}\\i{1 if italic else 0}\\fs{size}{scale}" + "}" + esc(text)
+    a = f"\\alpha&H{alpha}&" + (f"\\4a&HFF&" if alpha == "FF" else "")
+    return ("{" + f"\\1c{ass_color(color)}{a}\\fn{fname}\\b{bold}\\i{1 if italic else 0}\\fs{size}{scale}" + "}"
+            + esc(text))
 
 
 def split_lines(texts, cfg):
@@ -258,7 +286,7 @@ def split_lines(texts, cfg):
     return [list(range(best)), list(range(best, len(texts)))]
 
 
-def build(words, cfg, W, H, keys, y_frac, mode, duration):
+def build(words, cfg, W, H, keys, y_frac, mode, duration, selective=False):
     fs = round(cfg["size_pct"] / 100 * H)
     vertical = H > W * 1.2
     max_w = W * (0.71 if vertical else 0.80)
@@ -282,8 +310,21 @@ def build(words, cfg, W, H, keys, y_frac, mode, duration):
         style_line, "", "[Events]", "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
     ])
     events, design_srt, fits = [], [], 0
-    groups = group_words(words, cfg, fs, max_w)
     idx = {id(w): i for i, w in enumerate(words)}
+    keyids = frozenset(id(w) for i, w in enumerate(words) if i in keys)
+    groups = group_words(words, cfg, fs, max_w, keyids)
+    all_groups = groups
+    if selective:
+        def beat(g):
+            return any(id(w) in keyids for w in g) or any(ch.isdigit() for w in g for ch in w["text"])
+        keep = set()
+        for gi, g in enumerate(groups):
+            if beat(g):
+                keep.add(gi)
+                if cfg["key_solo"] and gi > 0 and g[0]["start"] - groups[gi - 1][-1]["end"] < 0.6:
+                    keep.add(gi - 1)  # the setup words that lead into the apex word
+        groups = [g for gi, g in enumerate(groups) if gi in keep]
+    selective_share = (sum(len(g) for g in groups) / max(1, len(words))) if selective else None
     x, y = W // 2, int(H * y_frac)
     per_word = bool((mode in ("active", "both") and cfg["active"]) or cfg["upcoming"] or cfg["active_bold"]
                     or (mode in ("key", "both") and cfg["key_color"] and not cfg["key_font"]))
@@ -304,11 +345,18 @@ def build(words, cfg, W, H, keys, y_frac, mode, duration):
         if sum(gkeys) > 1:
             first = gkeys.index(True)
             gkeys = [i == first for i in range(len(g))]
+        if cfg["key_case"] and mode != "none":
+            texts = [t.upper() if (k and cfg["key_case"] == "upper") else t for t, k in zip(texts, gkeys)]
         design_srt.append((g_in, g_out, " ".join(texts)))
         lines = split_lines(texts, cfg)
-        widest = max(text_width([texts[j] for j in line], cfg, fs) for line in lines)
-        scale_fit = min(1.0, max_w / widest) if widest > 0 else 1.0
-        scale_fit = max(scale_fit, 0.7)
+        solo_key = cfg["key_solo"] and len(g) == 1 and gkeys[0] and cfg["key_size_pct"] and mode != "none"
+        if solo_key:  # apex word: may shrink a lot on narrow (vertical) frames, never past the safe width
+            kfs = cfg["key_size_pct"] / 100 * H
+            widest = len(texts[0]) * kfs * (cfg["key_char_w"] or cfg["char_w"])
+            scale_fit = min(1.0, max_w / widest) if widest > 0 else 1.0
+        else:
+            widest = max(text_width([texts[j] for j in line], cfg, fs) for line in lines)
+            scale_fit = max(min(1.0, max_w / widest) if widest > 0 else 1.0, 0.7)
         fits += scale_fit < 1.0
         steps = range(len(g)) if per_word else [None]
         for k in steps:
@@ -330,8 +378,18 @@ def build(words, cfg, W, H, keys, y_frac, mode, duration):
             fin = 120 if (first_step and cfg["anim"] == "fade" and gap_before >= 0.2) else 0
             fout = 90 if (last_step and cfg["anim"] in ("fade", "pop") and gap_after >= 0.25 and t1 - t0 >= 0.3) else 0
             lead = f"{{\\an5\\pos({x},{y})" + (f"\\fad({fin},{fout})" if fin or fout else "") + "}"
-            events.append(f"Dialogue: 0,{ts(t0)},{ts(t1)},Cap,,0,0,0,,{lead}" + "\\N".join(parts))
-    return header + "\n" + "\n".join(events) + "\n", design_srt, len(groups), fits
+            events.append(f"Dialogue: 1,{ts(t0)},{ts(t1)},Cap,,0,0,0,,{lead}" + "\\N".join(parts))
+        if cfg["context"]:  # feed: neighbouring lines dimmed above and below while this one is live
+            gpos = all_groups.index(g)
+            step = round(fs * 1.45)
+            for off, ng in ((-1, all_groups[gpos - 1] if gpos > 0 else None),
+                            (1, all_groups[gpos + 1] if gpos + 1 < len(all_groups) else None)):
+                if not ng:
+                    continue
+                dim = " ".join(word_markup(clean_word(w["text"], cfg), "static", False, cfg, H, False, "none",
+                                           1.0, alpha="A6") for w in ng)
+                events.append(f"Dialogue: 0,{ts(g_in)},{ts(g_out)},Cap,,0,0,0,,{{\\an5\\pos({x},{y + off * step})}}{dim}")
+    return header + "\n" + "\n".join(events) + "\n", design_srt, len(groups), fits, selective_share
 
 
 def access_srt(words, duration):
@@ -381,6 +439,8 @@ def main():
     ap.add_argument("--max-words", type=int)
     ap.add_argument("--accent", help="hex colour for the highlight")
     ap.add_argument("--srt-mode", choices=["access", "design"], default="access")
+    ap.add_argument("--selective", action="store_true",
+                    help="caption only the beats (key words, numbers, their setup words); aim for 25-40%% of words")
     ap.add_argument("--out", help="output .ass path (default next to words file)")
     ap.add_argument("--burn", help="also burn into this output video (needs --video)")
     ap.add_argument("--fonts", default="work/fonts", help="folder with .ttf files for burn-in")
@@ -420,7 +480,8 @@ def main():
         die("give --video or --size")
     # 9:16 default 0.60 keeps captions inside the cross-platform safe box (y 288-1248 of 1920): Meta reserves
     # the bottom 35%, TikTok/Shorts put description + buttons there. 16:9 sits low; 1:1/4:5 in between.
-    y = args.y if args.y is not None else (0.60 if H > W * 1.2 else (0.78 if abs(H - W) < W * 0.3 else 0.86))
+    y = args.y if args.y is not None else (cfg["y"] if cfg["y"] is not None else
+                                           (0.60 if H > W * 1.2 else (0.78 if abs(H - W) < W * 0.3 else 0.86)))
 
     words = read_json(args.words)
     if isinstance(words, dict):
@@ -431,7 +492,9 @@ def main():
     if mode == "auto":
         mode = "key" if (keys and (cfg["key_color"] or cfg["key_font"])) else ("active" if cfg["active"] else
                                                                               ("key" if keys else "none"))
-    ass, design, n_groups, fits = build(words, cfg, W, H, keys, y, mode, duration)
+    if args.selective and not keys:
+        die("--selective needs --keywords (the beats to keep are chosen by meaning)")
+    ass, design, n_groups, fits, share = build(words, cfg, W, H, keys, y, mode, duration, args.selective)
 
     out = args.out or os.path.join(os.path.dirname(os.path.abspath(args.words)), f"captions_{name}.ass")
     with open(out, "w", encoding="utf-8") as f:
@@ -443,6 +506,10 @@ def main():
             f.write(f"{i}\n{srt_ts(a)} --> {srt_ts(b)}\n{t}\n\n")
     print(f"Wrote {out} ({n_groups} caption groups, style {name}, highlight={mode}, {W}x{H}, y={y}; "
           f"{fits} group(s) shrunk to fit the safe width) and {srt_path} ({args.srt_mode} SRT)")
+    if share is not None:
+        verdict = "ok" if 0.25 <= share <= 0.40 else ("too sparse: add key words" if share < 0.25 else
+                                                       "too dense: fewer key words")
+        print(f"Selective captions: {share:.0%} of words on screen ({verdict}; target 25-40%).")
     if keys and mode in ("active", "none"):
         print("NOTE: keywords were given but highlight mode ignores them; use --highlight key or both.")
     have = {f.rsplit(".", 1)[0].lower() for f in os.listdir(args.fonts)} if os.path.isdir(args.fonts) else set()

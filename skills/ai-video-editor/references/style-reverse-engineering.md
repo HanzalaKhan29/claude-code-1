@@ -4,6 +4,24 @@ Goal: a style card of measured rules, each with a reason and an example timestam
 
 ## 1. Get the references
 
+**Two ways in.** Ask: "Give me 2-3 video links, OR a YouTube channel / Instagram page?"
+
+- **A channel or page:** do not make the user pick. Rank its recent posts and take the top 10 edits of the
+  format being made, then measure all of them:
+  ```bash
+  python3 scripts/top_refs.py "https://www.youtube.com/@creator/shorts" --top 10 --out work/refs/creator
+  python3 scripts/top_refs.py "https://www.instagram.com/creator/" --top 10 --cookies-from-browser chrome --out work/refs/creator
+  python3 scripts/compare_refs.py work/refs/creator/* --out work/refs/creator     # what they ALWAYS do
+  ```
+  YouTube ranks by views. Instagram hides views, so it ranks by likes: say "most liked", never "most viewed".
+  If Instagram/TikTok listing fails even with cookies, open the page in the browser, copy the top post URLs
+  into `urls.txt` and run `top_refs.py --urls urls.txt`. Use `--list-only` first to show the user the ranked
+  list before downloading.
+- **Links:** measure each with `analyze_reference.py`, then `compare_refs.py` if there are 2 or more.
+- `compare_refs.py` marks each metric CONSISTENT (60%+ of videos within 25% of the median) or VARIES. Only
+  CONSISTENT numbers become style-card rules; VARIES are per-video choices. It still cannot read fonts,
+  captions, graphics or hooks: open each video's `hook.png` and `shots/` and check those across the set.
+
 - Store everything under `work/refs/<name>/` in the project folder so later sessions can reuse the measurements.
 - Only one reference video? Measure it anyway, but mark every rule "seen once" and tell the user which rules may be one-off choices (a single punch-in, a one-time colour). Ask for a second video before treating them as the creator's style.
 - The user only wants a breakdown ("what makes this editing style work?") and no edit: skip the intake questions and go straight to measuring and explaining.
@@ -80,3 +98,21 @@ From `platforms-and-styles.md` Part C (mostly observed, some measured; say "pres
 ## 8. Ethics and honesty
 
 Learning a style is normal craft. Copying a creator's logo, intro, music, or exact graphics package is not: build the style from its mechanics and the user's own brand. If the user asks to clone protected assets, say so plainly and offer the mechanics instead.
+
+## 9. The Style Lab: a motion vocabulary that compounds
+
+The storyboard says what happens scene by scene; the Style Lab is the reusable vocabulary it draws from. Keep
+it in `assets/style-lab.md` (copy to the user's workspace once and keep it across projects):
+
+- **Keep / Maybe / Drop.** Rate every motion option (caption treatment, transition, card style, SFX) against
+  the brief. Track coverage ("12 of 20 rated"). Drops go into a **kill log with the reason**, so killed
+  styles are never re-proposed.
+- **Fair comparison.** Compare options on the same brief and the same beat (never option A on the hook vs
+  option B on the CTA).
+- **Brief deltas.** When the brief changes, write down what changed and why, and re-check the Keeps it affects.
+- **Feedback banner.** Record the user's notes verbatim on the option ("square corners, no rounding (your
+  note)"), so corrections compound instead of repeating.
+- **STYLE.md as build instructions.** The locked style is written as values a renderer can execute ("apex
+  tier Anton 18% cap height, accent #D17054, pop 0 frames"), never as mood prose ("premium and dynamic").
+- The sound library lives in the same file: SFX and music tagged by role (riser, impact, whoosh, pop, bed),
+  source and licence, and Keep / Maybe / Drop.

@@ -94,7 +94,7 @@ hyperframes render [DIR] [-c|--composition compositions/x.html] [-o out] [-f|--f
      [--browser-timeout S] [--player-ready-timeout MS] [--low-memory-mode] [--frames-cache-dir DIR] [--hdr|--sdr]
 hyperframes snapshot [DIR] [--frames 5] [--at 3.0,10.5] [--no-end] [--zoom '#sel' | x,y,w,h] [--against ref.mp4] [--describe false]
 hyperframes check [DIR] [--json] [--samples 9] [--at ...] [--at-transitions] [--strict] [--no-contrast] [--snapshots]
-     [--caption-zone "x0=0;y0=.82;x1=1;y1=1;severity=error"] [--frame-check]
+     [--caption-zone "x0=0;y0=0.82;x1=1;y1=1;severity=error"] [--frame-check]
 hyperframes lint [DIR] [--json] [--verbose]
 hyperframes validate [DIR] [--json] [--timeout 3000]      # deprecated → use check
 hyperframes inspect  [DIR] ...                           # deprecated → use check
@@ -448,7 +448,7 @@ Chunking rules (video-use): 2–3 words, uppercase for Shorts, break on punctuat
 **HTML caption alternative (HyperFrames):**
 - Install a caption component (`hyperframes add caption-highlight` / `caption-pill-karaoke` / `caption-kinetic-slam` …) or write spans timed from `transcript.json` (`hyperframes transcribe` writes word-level timestamps into the project).
 - Render as a **transparent WebM or MOV** and overlay LAST with ffmpeg, or render the whole edit inside HyperFrames with the `<video>` as the base layer.
-- Benefits: web fonts, gradients, emoji, blur and layout that ASS cannot do. `check --caption-zone "x0=0;y0=.82;x1=1;y1=1;severity=error"` QA's caption placement against overlap.
+- Benefits: web fonts, gradients, emoji, blur and layout that ASS cannot do. `check --caption-zone "x0=0;y0=0.82;x1=1;y1=1;severity=error"` QA's caption placement against overlap.
 - Cost: a slower render than libass.
 
 ---

@@ -1,6 +1,6 @@
 # EDIT_STATE: <project name>
 
-Updated: <date> · Stage: intake | style | rough cut | visuals | captions | sound | final | delivered
+Updated: <date> · Stage: intake | style | rough cut | storyboard | visuals | captions | grade | sound | final | delivered
 
 ## Brief
 - What it is / audience / the one takeaway:
@@ -10,6 +10,8 @@ Updated: <date> · Stage: intake | style | rough cut | visuals | captions | soun
 - Caption style:
 - Language:
 - Never-list:
+- Visuals: user has assets? (yes/no, where) · source the rest? · Higgsfield for this project? (yes/no)
+- Music/SFX source: Epidemic Sound | free sources
 
 ## Approvals (date + what was approved)
 - 
@@ -20,9 +22,12 @@ Updated: <date> · Stage: intake | style | rough cut | visuals | captions | soun
 - Palette, fonts, accent:
 - Music / loudness:
 
-## Visuals plan
-| # | In-Out (edited) | Spoken words | What appears | Zone | Why |
-|---|---|---|---|---|---|
+## Storyboard
+- File: renders/storyboard.html · Selected option: · Approved: <date> (or pending)
+
+## Visual sources (one row per sourced or generated asset)
+| Scene | File | Source (user / URL / Higgsfield / prompt pack) | Licence / attribution |
+|---|---|---|---|
 
 ## Versions
 | Version | File | What changed | QA result |

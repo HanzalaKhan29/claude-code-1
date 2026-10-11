@@ -1,5 +1,18 @@
 # HyperFrames starters
 
+`kinetic-reel/` (1080x1920, 8 s, full-frame) is the motion-reels genre grammar from `references/motion-reels.md`:
+whisper tier (italic serif ~4.5%) + apex tier (Anton caps ~16-19% cap height), hard word pops on the spoken
+word, the ground colour rotating ink -> accent -> cream between beats instead of transitions, one accent, a
+hand-drawn annotation ellipse, a soft 3 s end card, and seek-safe film grain (`grain.png`, ~2.5%). The copy is
+EXAMPLE text: replace the words in the HTML and the times in `BEATS` with the user's VO and `words_cut.json`
+times. Fonts: `fetch_fonts.py "Anton:400" "Instrument Serif:i400" "JetBrains Mono:700" --dir <dir>/fonts`.
+Render with `npx hyperframes render . --crf 20 -o reel.mp4` (grain defeats compression; CRF 18-22 keeps the
+file sane, the platform re-encodes anyway). Lint- and check-clean with HyperFrames 0.8.147.
+Gotchas learned building it: SVG `feTurbulence` grain renders blank in headless capture (use the PNG tile);
+`vector-effect: non-scaling-stroke` breaks `pathLength` draw-on math (use a thin stroke in viewBox units);
+an opacity tween is a fade, not a pop (use `tl.set` for visibility, tween only the scale settle); text under
+the grain layer needs `data-layout-allow-occlusion` on each text node or `check` reports text_occluded.
+
 `stat-counter/index.html` is a transparent stat card with a seek-safe counter and fixed-width digits (example numbers: replace them). Fonts: `fetch_fonts.py "Manrope:500,800" --dir <project>/fonts`. Same workflow as below.
 
 `lower-third/index.html` is a transparent lower-third overlay (1920x1080, 5 s) that follows the HyperFrames

@@ -1,6 +1,6 @@
 # Delivery Specs, Safe Zones, Creator Editing Styles, Retention Principles
 
-Contents: PART A: Export specs per platform · PART B: Safe zones for vertical video (1080x1920) · PART C: Creator editing-style breakdowns · PART D: Retention-backed principles (evidence vs opinion) · Source-confidence summary
+Contents: PART 0: October 2026 update (read first) · PART A: Export specs per platform · PART B: Safe zones for vertical video (1080x1920) · PART C: Creator editing-style breakdowns · PART D: Retention-backed principles (evidence vs opinion) · Source-confidence summary
 
 Research reference for an AI video-editor skill. Compiled 2026-10-11.
 
@@ -14,6 +14,38 @@ Research reference for an AI video-editor skill. Compiled 2026-10-11.
 All fetched web content was treated as untrusted data.
 
 ---
+
+## PART 0: October 2026 update (read first)
+
+Evidence: [STATED] the platform said it; [STUDY] a large-sample analysis; [REPORTED] practitioner consensus
+without a linked source. Policies carry dates so they do not rot into folklore.
+
+- **Safe zones re-checked October 2026: unchanged.** Keep the cross-platform box (x 120-888, y 288-1248 of
+  1920). One conflicting creator claim about new zones was not confirmed; it is recorded, not adopted.
+  [REPORTED]
+- **YouTube Shorts "Clear Screen" playback (June 2026)** lets viewers hide the UI; design to the conservative
+  box anyway (the UI is still there for most), and assume the first seconds carry even more weight. [REPORTED]
+- **Durations (2026 calibrations, by genre, not laws):** Shorts 15-35 s; TikTok performance is bimodal (short
+  punchy OR long satisfying; the middle underperforms) [STUDY, 111k videos, citation not linked]; Reels work in
+  two bands, 45-60 s and 120-180 s, with a drop after 180 s. [REPORTED]
+- **Instagram ranking (Mosseri):** the first seconds dominate; sends/shares and saves weigh more than likes.
+  [STATED] Trial Reels show a reel to non-followers first: route new formats through them. [STATED]
+- **Loops:** resolve 80-90% of the loop cleanly and end the audio mid-thought so the restart feels like a
+  continuation. (A "1.2x loop speed" claim is unverified.)
+- **Originality crackdown (dated):** Instagram demotes reposted/aggregated content (rule introduced April
+  2024, extended to photos and carousels April 2026); Facebook tightened unoriginal-content rules in 2026;
+  YouTube's reused-content enforcement was tightened again in 2026. Watermarked or re-uploaded content is
+  close to distribution-dead. Exact dates beyond Instagram's are [REPORTED].
+- **Landscape masters as Reels:** Instagram letterboxes a 16:9 upload in the Reels player (it does not
+  centre-crop). Two of the four reference motion pages post 16:9 on purpose; keep type centre-safe.
+- **Covers:** Instagram's profile grid shows 3:4; for 4:5 feed posts the visible band is about y 285-1635 of a
+  1080x1920 frame. Compose covers for both. Meta states tall displays (19.5:9) crop the edges of 9:16.
+- **TikTok:** captions up to 4,000 characters, and on-screen text is indexed for search, so put the words the
+  video should rank for in a burned text line once. Comment polls are a lower-friction CTA than "comment X".
+- **Series formats** ("Part 1/2/3") earn follow-through viewing; the previous part does the hooking.
+- **Myths (do not encode as rules):** universal best posting times (low evidence); hashtags as a reach boost
+  (they now work as search labels); "50% of viewers watch muted" (widely quoted, never sourced; design muted-
+  first anyway because the practice is sound).
 
 ## PART A: Export specs per platform
 

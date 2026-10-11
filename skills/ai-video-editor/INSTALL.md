@@ -18,6 +18,10 @@
 - "Make a vertical Short from 2:10 to 2:55 of `podcast.mp4` with viral captions."
 - "Break down the editing style of these 3 videos and write me a style card."
 - "Make a 6-second animated stat card: 'from 1,200 to 48,000 subscribers'. Look 20, transparent background."
+- "Make a 30-second motion-graphics reel like @metromedia.house from my voiceover `vo.mp3`. Storyboard it first."
+- "Here's my channel <URL>. Find my top 10 edits and tell me what my style actually is."
+- "Grade `broll/` to match my talking-head footage and give me the look as a LUT."
+- "Edit this UGC ad into 12 hook variants; the avatar is AI, handle the disclosure."
 - Notes after watching: "At 0:22 the caption covers my mouth. At 0:41 the zoom is too strong. Too many sound effects."
 - After every round: **"Can you learn from what we did and add it to the skill?"**
 

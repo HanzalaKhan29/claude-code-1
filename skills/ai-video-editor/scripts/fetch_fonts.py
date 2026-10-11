@@ -46,8 +46,11 @@ def fetch(spec, out_dir):
         # unicode-range blocks repeat per subset; keep latin + devanagari by downloading each unique file
         name = f"{family.strip().replace(' ', '')}-{weight}{'Italic' if style == 'italic' else ''}"
         path = os.path.join(out_dir, name + ".ttf")
-        if os.path.exists(path):
+        if path in saved:  # extra unicode-range subset of a weight already saved this run
             path = os.path.join(out_dir, f"{name}-{len(saved)}.ttf")
+        elif os.path.exists(path):  # fetched in an earlier run: keep it, do not download again
+            saved.append(path)
+            continue
         urllib.request.urlretrieve(url.group(1), path)
         saved.append(path)
     return saved

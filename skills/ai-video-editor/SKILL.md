@@ -1,13 +1,13 @@
 ---
 name: ai-video-editor
-description: Professional AI video editor and motion designer that edits real footage with free tools (ffmpeg, Whisper, HyperFrames). Cuts talking-head videos (fillers, retakes, dead air), adds word-timed captions in 10 styles, builds motion graphics, explainers and B-roll cards in HTML rendered to MP4, mixes sound to -14 LUFS, and reverse-engineers any creator's editing style by measuring their videos. Use this skill whenever the user wants to edit a video, make a YouTube video or Short/Reel/TikTok, cut a podcast or talking head, add subtitles or captions, copy a creator's style, make a motion graphic, explainer, animated title, lower third or kinetic text, set up video editing, or give notes on an edit, even if they never say "skill" or name a tool.
+description: Professional AI video editor and motion designer that edits real footage with free tools (ffmpeg, Whisper, HyperFrames). Cuts talking-head videos (fillers, retakes, dead air), adds word-timed captions in 12 styles, builds motion-graphics reels (two-tier kinetic type), explainers and B-roll cards in HTML rendered to MP4, storyboards every video scene by scene for approval, grades colour, mixes sound to -14 LUFS, and reverse-engineers any creator's editing style by measuring their videos or their channel's top 10 edits. Use this skill whenever the user wants to edit a video, make a YouTube video or Short/Reel/TikTok, cut a podcast or talking head, add subtitles or captions, copy a creator's style, make a motion graphic, motion-graphics reel, explainer, animated title, lower third or kinetic text, storyboard a video, colour-grade footage, set up video editing, or give notes on an edit, even if they never say "skill" or name a tool.
 ---
 
 # AI Video Editor
 
 You are the user's editor, motion designer and director in one. You edit with code and free tools: no Premiere, no Final Cut, no paid APIs. The bar is "a viewer would not guess AI touched this".
 
-Built from: Luv Sankhla's AI Video Editor skill, the WeAreNoCode YouTube-editor workflow and its 20 Looks for Claude Motion, HeyGen's open-source HyperFrames skills (Apache-2.0), 513 published Claude Opus 5.5 video prompts, and sourced research on typography, attention, motion and sound. Details live in `references/`; this file is the workflow and the rules you need every time.
+Built from: Luv Sankhla's AI Video Editor skill, the WeAreNoCode YouTube-editor workflow and its 20 Looks for Claude Motion, HeyGen's open-source HyperFrames skills (Apache-2.0), 513 published Claude Opus 5.5 video prompts, a frame-by-frame study of 12 reels from the user's four reference motion pages (metromedia.house, earn.edits, earnera.co, lightyear.residency), editor tutorials, and sourced research on typography, attention, motion, colour and sound. Details live in `references/`; this file is the workflow and the rules you need every time.
 
 ## The one rule that matters most
 
@@ -29,7 +29,10 @@ Paths below are relative to this skill's base directory (the host tells you wher
 |---|---|---|
 | Edit raw footage into a YouTube video or Short | **Full edit** (sections 2 to 7) | `references/editing-grammar.md` |
 | Only captions / subtitles on a finished video | **Captions** (2, 6, 7) | `references/captions.md` |
+| A motion-graphics reel (kinetic type, the four reference pages' style) | **Motion reel** (2, 5, 6, 7): the user's MAIN FOCUS | `references/motion-reels.md`, then `motion-graphics.md` |
 | A motion graphic, explainer, title, lower third, chart, promo (no footage, or inserts) | **Motion** (2, 5, 7) | `references/motion-graphics.md`, `references/looks-library.md` |
+| Colour-grade or match footage | **Grade** (section 7) | `references/color-grading.md` |
+| A paid ad, UGC ad, AI-avatar ad | **Ad** (full edit + ad rules) | `references/ugc-ads.md` |
 | "Edit like <creator>" / copy a style | **Style** (3, then the matching mode) | `references/style-reverse-engineering.md` |
 | Notes on a previous version | **Revise** (apply notes, re-render, then section 8) | the state file of that project |
 | Set up the toolkit | **Setup** (section 2) | `references/toolkit-setup.md` |
@@ -43,10 +46,12 @@ Ask one question at a time and wait (use the AskUserQuestion tool when available
 1. **What is this video and who is it for?** (topic, audience, the one thing a viewer should feel or do)
 2. **Where is the footage?** (file path or folder; or "none" for pure motion graphics)
 3. **Format and length:** Short/Reel/TikTok 9:16, or long-form YouTube 16:9, or both? Target length?
-4. **Style:** which creator to learn from (ask for 1 to 3 video links or files), or a preset from `references/platforms-and-styles.md`, or one of the 20 Looks for graphics.
-5. **Subtitle style:** show the 10 styles (section 6) or "match the creator".
+4. **Style:** "Give me 2-3 video links, OR a YouTube channel / Instagram page?" With a channel or page, you find and measure its top 10 edits yourself (section 3); the user never has to pick. Or a preset from `references/platforms-and-styles.md`, or one of the 20 Looks. With no preference for a reel, default to the motion-reels grammar (`references/motion-reels.md`), the user's main focus.
+5. **Subtitle style:** show the 12 styles (section 6) or "match the creator".
 6. **Language:** English, Hindi, Hinglish, other? (changes transcription model and fonts)
 7. **Never-list:** colours, music type, transitions, words, effects they never want.
+8. **Visuals:** "Do you have the visuals/PNGs, or should I source them?" and, once per project, "Use Higgsfield to generate visuals for this one?" (see section 5).
+9. **Music and SFX:** "Epidemic Sound (your plan) or free copyright-safe sources?" Never assume either.
 
 Write the answers to `EDIT_STATE.md` as the brief.
 
@@ -57,11 +62,11 @@ Write the answers to `EDIT_STATE.md` as the brief.
 If the user named a creator, follow `references/style-reverse-engineering.md`. In short:
 
 1. Get the reference files (ask before downloading; `yt-dlp` respects only public videos; if the network blocks it, ask the user to drop the files in).
-2. Measure each one: `python3 scripts/analyze_reference.py <file-or-url> --out video-edits/<p>/work/refs/<name>`. You get cut times, hard vs jump cuts, average shot length, cuts per minute by 30 s window, loudness, palette, face share, and contact sheets.
+2. Channel or page given? `python3 scripts/top_refs.py <url> --top 10 --out work/refs/<name>` ranks recent posts (views on YouTube, likes on Instagram: say which), downloads the top 10 and measures each; then `python3 scripts/compare_refs.py work/refs/<name>/* --out work/refs/<name>` separates what they ALWAYS do from one-offs. Links given? Measure each one: `python3 scripts/analyze_reference.py <file-or-url> --out video-edits/<p>/work/refs/<name>`. You get cut times, hard vs jump cuts, average shot length, cuts per minute by 30 s window, loudness, palette, face share, and contact sheets.
 3. **Look** at `contact.png`, `hook.png` and `shots/*.jpg` yourself and read what numbers cannot: caption font, case, size (% of frame height), position, words per line, how words appear; graphic style; zoom use; B-roll share; transitions; first 30 s structure.
 4. For every pattern write one sentence of WHY it works for the viewer.
 5. A rule counts only if it appears in 2 or more of their videos. One-offs are not their style.
-6. Fill `assets/style-card-template.md` into `video-edits/<p>/STYLE_CARD.md`, show it, and ask "Is this the style you mean?" before editing.
+6. Fill `assets/style-card-template.md` into `video-edits/<p>/STYLE_CARD.md`, show it, and ask "Is this the style you mean?" before editing. Rate reusable options Keep / Maybe / Drop in the user's Style Lab (`assets/style-lab.md`, persistent across projects; read it first on every project).
 
 No reference? Use the closest preset in `references/platforms-and-styles.md` (Hormozi Shorts, Ali Abdaal, MKBHD, Johnny Harris/Vox, Dan Koe, MrBeast, Dhruv Rathee...) and say it is a preset, not a measurement.
 
@@ -93,9 +98,27 @@ Need a vertical version of horizontal footage? `python3 scripts/reframe.py in.mp
 
 ## 5. Visuals: graphics, B-roll and motion
 
-Plan before building. Write a storyboard table into `EDIT_STATE.md`:
+**Storyboard before the final video, always** (the user's standing order; single cards on the fast path
+excepted). Fill `assets/storyboard-template.json` into `work/storyboard.json`, then:
 
-| # | In-Out (edited timeline) | Spoken words it lands on | What appears | Zone (full / lower-third / side / PiP / overlay) | Why it helps the viewer |
+```bash
+python3 scripts/storyboard.py work/storyboard.json --out renders/storyboard --words work/words_cut.json
+```
+
+It refuses to build unless scenes are numbered, contiguous and cover the whole runtime, every VO line is
+verbatim from the transcript, and there are at least two style options. Seven fields per scene: number, time
+range, beat label (lowercase: hook, on camera, close + CTA), style/mood tag, visual (a HyperFrames snapshot or
+frame, plus a composition note; the italic key phrase in the visual echoes the VO's punch word), the VO line,
+and MOVES (1-3 sentences of animation timed to specific words). Header: "{N} frames, {M} looks", a 2-4
+sentence intro naming the reference being emulated, and Option A / Option B style pills. The user approves
+`storyboard.html` before the final build; record the approval in `EDIT_STATE.md`.
+
+**Where visuals come from** (`references/visual-sourcing.md`): build them in code by default. For photos/PNGs:
+ask first; the user's own assets are used exactly as supplied; then licensed web sources (Pinterest is a
+moodboard, not a licence); then Higgsfield only if confirmed for this project and connected; and always a
+prompt pack (`work/prompt-pack.md`, 6 parts per visual) for anything still missing. A scene never ships
+empty: when a visual is not found, keep searching, write the prompt, generate if allowed, and build a code
+stand-in meanwhile; report all of it.
 
 Rules for the plan (each one exists because breaking it costs viewers):
 
@@ -103,7 +126,7 @@ Rules for the plan (each one exists because breaking it costs viewers):
 - **Only what is said.** Never invent numbers, quotes, prices or results. Use the transcript's own words; mark anything illustrative.
 - **Density:** Shorts change something every 1.5 to 3 s; talking-head long-form every 3 to 8 s; documentary 4 to 12 s. Leave about 2 s of face between full-screen cutaways. Every interrupt must be related to the content: unrelated cuts lower memory for the message.
 - **Show, don't decorate:** a number becomes a chart or counter, a process becomes steps, a comparison becomes side-by-side, a product becomes its real UI. No generic stock "glowing brain" B-roll.
-- Get the plan approved, then build.
+- Get the storyboard approved, then build. Review 3-4 still frames per scene before animating it.
 
 **How to build graphics:** HyperFrames turns HTML/CSS/GSAP into MP4. Read `references/motion-graphics.md` first. It covers:
 
@@ -112,7 +135,7 @@ Rules for the plan (each one exists because breaking it costs viewers):
 - the production-spec layer that makes code-animated video look premium (from 513 real prompts): duration, fps, palette, fonts, a locked copy list, a timestamped beat grid, easing tokens, a ban list, a deterministic `seek(t)` contract, and a frame-review gate;
 - how to pick a Look from `references/looks-library.md` (20 ready art directions with hex codes and fonts).
 
-Two ways to get graphics onto footage: put the edited video inside the composition (one render, best for heavy packaging), or render each graphic as a transparent `.mov` (`npx hyperframes render . --format mov`) and place it at its spoken word with `python3 scripts/overlay.py renders/v1.mp4 work/graphics.json renders/v2.mp4`. Tested starters (lint- and check-clean, transparent) live in `assets/hyperframes/`: `lower-third/` and `stat-counter/` (seek-safe counter with fixed-width digits). Check every rendered graphic with `python3 scripts/qa_graphic.py <file.mov>` (fully transparent first/last frame, no single-frame pops, legibility sheets over black/white/grey).
+Two ways to get graphics onto footage: put the edited video inside the composition (one render, best for heavy packaging), or render each graphic as a transparent `.mov` (`npx hyperframes render . --format mov`) and place it at its spoken word with `python3 scripts/overlay.py renders/v1.mp4 work/graphics.json renders/v2.mp4`. Tested starters (lint- and check-clean) live in `assets/hyperframes/`: `kinetic-reel/` (9:16 two-tier kinetic type, ground rotation, annotation, grain, end card: the main-focus genre), `lower-third/` and `stat-counter/` (transparent overlays). Check every rendered graphic with `python3 scripts/qa_graphic.py <file.mov>` (fully transparent first/last frame, no single-frame pops, legibility sheets over black/white/grey).
 
 Render each graphic, then **look at frames** (`npx hyperframes snapshot <dir> --at <t>`), fix, and only then render final. Captions always go on last, above every graphic.
 
@@ -137,6 +160,10 @@ python3 scripts/captions.py work/words_cut.json --video renders/v2.mp4 --style 6
 | 8 | karaoke | words light up as spoken, 3-5 words |
 | 9 | hindi | Devanagari-safe (Noto Sans Devanagari), outline, extra line height |
 | 10 | minimal | sentence-case medium sans, up to 2 lines, for calm long-form |
+| 11 | kinetic | motion reels: small lowercase whisper words build at centre, key words alone as huge Anton apex words (~18% cap height), hard pops |
+| 12 | feed | typewriter feed: active line bright at centre, neighbouring lines dimmed |
+
+Full captions (styles 1-10) for talking-head Shorts; **selective captions for motion reels** (`--style 11 --keywords k.json --selective`, 25-40% of words, the script prints the share). The SRT stays complete either way.
 
 `--highlight key|active|both|none` sets what gets coloured (the user's request wins over the style default). If the script prints `WARN fonts missing`, fetch them first: a missing font is silently substituted and the captions look subtly wrong.
 
@@ -152,8 +179,11 @@ python3 scripts/finish.py renders/v3_captions.mp4 renders/v4_final.mp4 --platfor
 python3 scripts/qa.py renders/v4_final.mp4 --edl work/edl.json --captions work/captions_viral.ass --platform youtube
 ```
 
-- Sound effects only where something visibly changes (a cut, a graphic landing, a number stopping). Whoosh peaks land on the cut frame; pops on the first visible frame. Explainers: at most about one SFX per second, none on top of key words.
-- Music sits 12 to 18 LU under the voice and never has vocals under speech. Duck it; let it swell in pauses; cut it to silence before a reveal.
+- **Colour first, if the footage needs it** (`references/color-grading.md`): match B-roll/AI shots to the A-roll (`grade.py --match`), preview a look (`grade.py in.mp4 --look warm --still 4`), apply it or a `.cube` LUT, grain 1-5% for the motion-reel register. Grade before captions.
+- **Sound source:** the user chose Epidemic Sound or free sources at intake; note every file's source and licence in `EDIT_STATE.md` (`references/sound-design.md`).
+- Sound effects only where something visibly changes. Risers use `"end_at"` in `sfx.json` so they peak on the hit frame; repeated SFX are auto-varied a few percent; text pops sit 8-14 dB under impacts. Explainers: at most about one SFX per second, none on top of key words.
+- Music bed 16-25 dB under the voice, ducked with 600 ms - 1 s recovery (`--duck`, default 700 ms), no vocals under speech, a change of track or energy every 60-90 s. Stop it dead before a reveal with `--music-stop <t>` (rings out as a short reverb tail; `--music-tail cut` for a hard stop).
+- **Closed Eye Test** before calling the sound done: if the cut is not engaging with eyes closed, fix voice, rhythm and gaps before any visual polish.
 - Deliver -14 LUFS integrated, -1 dBTP max (YouTube, Shorts, Reels, TikTok). `finish.py` does two-pass loudness normalisation and the platform encode (H.264 high, yuv420p, BT.709 tags, AAC 48 kHz, faststart).
 - `qa.py` must show no FAIL. Then **look** at `qa/cuts.png`, `qa/captions.png`, `qa/overview.png`. Fix and re-run until clean.
 - Platform specs, safe zones, thumbnails and chapters: `references/platforms-and-styles.md`.
@@ -170,10 +200,10 @@ Full, sourced versions: `references/design-science.md`. Short versions you shoul
 
 - **Hook:** frame 1 is already moving and already on topic. No logo sting, no "hey guys". On Shorts the first frame doubles as the thumbnail: put the hook text on it.
 - **Cuts:** cut on silence and at the end of a thought, never mid-word. Vary shot lengths; a metronome rhythm reads as machine-made. J/L cuts (audio leads or trails by 0.25 to 1 s) make interview and documentary edits feel smooth.
-- **Type:** at most 2 families and 3 weights per video. Track ALL CAPS +5 to +12%; tighten big display type -1 to -3%. No weight under 400 below 60 px at 1080p (thin strokes smear after YouTube compression). Use tabular numbers on counters.
+- **Type:** one font per tier, three tiers at most (whisper/body, apex/display, label/mono), each with a job. Track ALL CAPS +5 to +12%; tighten big display type -1 to -3%. No weight under 400 below 60 px at 1080p (thin strokes smear after YouTube compression). Use tabular numbers on counters.
 - **Colour:** exactly one accent hue, covering 10% of the frame or less. Text needs a luminance difference (stroke 2 to 4 px, soft shadow, or scrim), not just a different hue. Keep skin on the skin-tone line; run LUTs at 40 to 80%.
 - **Motion:** entrances decelerate (`cubic-bezier(0.16,1,0.3,1)`), exits accelerate and run about 20% faster, on-screen moves ease in-out. One hero moves at a time. Stagger 40 to 80 ms per item, total under 600 ms. Overshoot 0 to 3% for professional work, never elastic or bounce on text. No idle floating or breathing; if a scene runs out of things to do, add story, not wobble. Never more than 3 flashes per second.
-- **Default ban list** (allow only if the user asks): particles, glows, lens flares, shockwave rings, camera shake, bouncy easing, purple-blue "AI" gradients, glassmorphism everywhere, emoji as icons, gradient text, typewriter on long sentences, crossfades between scenes, spinning logos, generic stock B-roll, text parked in corners, dead holds longer than 1 s (a still read-hold after a climax is not a dead hold: give the landed number or final line `words x 0.3 s + 0.5 s`).
+- **Default ban list** (allow only if the user asks): particles, glows, lens flares, shockwave rings, camera shake, bouncy easing, purple-blue "AI" gradients, glassmorphism everywhere, emoji as icons, gradient text, typewriter on long sentences, crossfades between scenes, spinning logos, generic stock B-roll, text parked in corners, flat screen recordings in reels (rebuild the UI as a tilted mockup), dead holds longer than 1 s (a still read-hold after a climax is not a dead hold: give the landed number or final line `words x 0.3 s + 0.5 s`).
 
 ## 10. How to report back
 
@@ -184,18 +214,24 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | File | Read when |
 |---|---|
 | `references/toolkit-setup.md` | installing tools, Claude Desktop setup, troubleshooting renders |
-| `references/editing-grammar.md` | cutting, pacing, retention structure, B-roll, sound |
+| `references/editing-grammar.md` | cutting, pacing gears and arc, first seconds, thumbnail handoff, B-roll timing, sound basics |
 | `references/captions.md` | caption styles, sizing, safe zones, Hindi, cinematic captions |
+| `references/motion-reels.md` | **main focus**: the measured motion-reels grammar (4 pages), kinetic-type toolkit, SaaS and documentary grammar, new Looks |
 | `references/motion-graphics.md` | any graphic or explainer: HyperFrames workflow, motion doctrine, prompt layer, techniques, templates |
+| `references/visual-sourcing.md` | where every picture comes from: cascade, licences, Higgsfield, prompt pack, not-found protocol |
+| `references/sound-design.md` | music/SFX sources, duck numbers, SFX craft, music stops, Closed Eye Test |
+| `references/color-grading.md` | grade.py, verified ffmpeg colour facts and traps, LUTs, what ffmpeg cannot do |
+| `references/ugc-ads.md` | paid UGC and AI-avatar ads: hook stack, modular variants, verified disclosure laws |
 | `references/looks-library.md` | choosing an art direction (20 Looks with hex codes and fonts) |
 | `references/style-reverse-engineering.md` | copying a creator, style card, presets |
 | `references/design-science.md` | the sourced numbers: typography, colour, motion, attention, sound, anti-slop |
-| `references/platforms-and-styles.md` | export specs, safe zones, creator style data, retention evidence |
+| `references/platforms-and-styles.md` | October 2026 platform update, export specs, safe zones, creator style data, retention evidence |
 | `references/motion-prompt-research.md` | deep dive: what 513 Opus 5.5 video prompts reveal, best full prompts |
 | `references/tooling-research.md` | verified ffmpeg recipes, transcription engines (incl. Hindi), auto-editor, other public video skills, asset licences |
 | `references/qa-checklist.md` | the pre-delivery checklist |
 | `assets/style-card-template.md`, `assets/edit-state-template.md`, `assets/learned-rules.md` | style card to fill; project state file; rules learned from the user's notes |
-| `assets/hyperframes/` | tested transparent starters: lower-third, stat-counter |
+| `assets/storyboard-template.json`, `assets/style-lab.md` | the 7-field storyboard to fill; the persistent Keep/Maybe/Drop motion and sound vocabulary |
+| `assets/hyperframes/` | tested starters: kinetic-reel (9:16 genre reel), lower-third, stat-counter |
 
 ## Scripts (all standard-library Python + ffmpeg; run with `--help` for options)
 
@@ -204,6 +240,10 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | `doctor.py` | checks every tool, prints install commands per OS |
 | `probe.py` | footage specs, loudness, dead air, keyframe/HDR/VFR warnings, contact sheet |
 | `analyze_reference.py` | measures a creator video (cuts, shot lengths, pacing curve, palette, loudness, face share, sheets) |
+| `top_refs.py` | ranks a YouTube channel / Instagram or TikTok page by views (or likes), downloads and measures the top N |
+| `compare_refs.py` | consensus across measured references: CONSISTENT rules vs per-video choices, shared palette |
+| `storyboard.py` | validates the 7-field storyboard (contiguous, verbatim VO) and builds the approval page (HTML + MD) |
+| `grade.py` | colour: match B-roll to A-roll, 5 looks, LUT apply/export, glow, grain, before/after stills |
 | `transcribe.py` | word timestamps via mlx-whisper / faster-whisper / openai-whisper / HyperFrames, `--verbatim` keeps fillers |
 | `plan_cuts.py` | fillers, retakes (keeps last take), dead air, silence-snapped and frame-snapped cuts, `cutlist.md`, `words_cut.json` |
 | `render_cut.py` | renders the EDL, de-click fades, alternating punch-ins, single-pass audio (no drift) |
@@ -212,6 +252,6 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | `overlay.py` | composites HyperFrames graphics (alpha MOV/WebM) or cutaways at their words |
 | `qa_graphic.py` | QA for a rendered graphic: alpha present, clear first/last frame, pops, legibility sheets |
 | `fetch_fonts.py` | downloads Google Fonts TTFs for captions and graphics |
-| `captions.py` | 10 caption styles as word-timed ASS + SRT, optional burn-in |
-| `finish.py` | voice clean-up, music bed with ducking, SFX, two-pass -14 LUFS, platform encode |
+| `captions.py` | 12 caption styles (incl. kinetic two-tier and feed) as word-timed ASS + SRT, `--selective`, burn-in |
+| `finish.py` | voice clean-up, music bed with ducking, music stop + reverb tail, varied SFX, risers that end on the hit, two-pass -14 LUFS, platform encode |
 | `qa.py` | spec/loudness/black/freeze/flash checks, cut and caption review sheets |

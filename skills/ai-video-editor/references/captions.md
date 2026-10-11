@@ -1,6 +1,6 @@
 # Captions and subtitles
 
-Contents: 1 Two kinds of caption · 2 The caption model (drop / rail / embed) · 3 The 10 styles · 4 Sizing and placement · 5 Grouping and timing · 6 Key words · 7 Legibility on footage · 8 Hindi and Hinglish · 9 Designed captions with HyperFrames · 10 Self-check
+Contents: 1 Two kinds of caption · 2 The caption model (drop / rail / embed) · 3 The 12 styles · 4 Sizing and placement · 5 Grouping and timing · 6 Key words · 7 Legibility on footage · 8 Hindi and Hinglish · 9 Designed captions with HyperFrames · 10 Self-check · 11 Selective captioning and type tiers (2026)
 
 ## 1. Two kinds of caption
 
@@ -19,9 +19,9 @@ From HeyGen's embedded-captions skill (Apache-2.0). Every spoken phrase is one o
 
 The rail carries most of the text. Embedding is earned: at most one per thought, never two on screen together, a beat of air between them, at most one "apex" per section. Embedding every word is the classic mistake.
 
-## 3. The 10 styles (`scripts/captions.py --list`)
+## 3. The 12 styles (`scripts/captions.py --list`)
 
-Sankhla's 7 plus 3 additions. Fonts are Google Fonts (OFL), fetched with `fetch_fonts.py --style N`.
+Sankhla's 7, plus 3 additions, plus 2 measured from the motion-reels pages (`motion-reels.md`). Fonts are Google Fonts (OFL), fetched with `fetch_fonts.py --style N`.
 
 | # | Name | Font | Look | Best for |
 |---|---|---|---|---|
@@ -35,6 +35,8 @@ Sankhla's 7 plus 3 additions. Fonts are Google Fonts (OFL), fetched with `fetch_
 | 8 | karaoke | Inter 800 | words light up in the accent as spoken, 3-5 words | music, fast talkers, engagement |
 | 9 | hindi | Noto Sans Devanagari 700 | Devanagari-safe, outline, extra line height | Hindi videos |
 | 10 | minimal | Inter 600 | sentence case, up to 2 lines, soft shadow | long-form YouTube |
+| 11 | kinetic | Inter 700 + Anton | two-tier: small lowercase whisper words revealed one by one at centre, key words ALONE as apex words (Anton caps ~18% of frame height, lime #DDF53D), hard pops | motion reels (metromedia / earnera grammar); use `--selective` |
+| 12 | feed | Inter 800 | typewriter feed: active line bright at centre, previous and next lines dimmed above/below | quote breakdowns, earnera-style reels |
 
 Override anything with `--style-json`, for example a measured creator style:
 `{"font": "Satoshi", "weight": 900, "case": "upper", "size_pct": 5.2, "active": "#00E676", "max_words": 2, "fonts": []}`
@@ -96,7 +98,7 @@ Two subtitle files come out of every run. `--srt-mode access` (default) writes a
 When the style needs web-only looks (rounded pills per word, gradients, behind-the-subject text, per-letter physics):
 - Plain designed captions: registry items `caption-highlight`, `caption-pill-karaoke`, `caption-kinetic-slam`, `caption-editorial-emphasis`, `caption-weight-shift` (`npx hyperframes catalog captions`, `npx hyperframes add <name>`), driven by `words_cut.json`, rendered as a transparent MOV and composited last with `overlay.py`.
 - Cinematic captions behind the speaker: the official `/embedded-captions` workflow (35 identities, subject matting, safe zones, timing gates). Refuses clips with multiple speakers, burned-in text or garbage transcripts, which is the right call.
-- `npx hyperframes check --caption-zone "x0=0;y0=.82;x1=1;y1=1;severity=error"` tests captions against a zone.
+- `npx hyperframes check --caption-zone "x0=0;y0=0.82;x1=1;y1=1;severity=error"` tests captions against a zone.
 
 ## 10. Self-check before rendering (from embedded-captions' 18 rules)
 
@@ -107,3 +109,36 @@ When the style needs web-only looks (rounded pills per word, gradients, behind-t
 - Every group emphasised? Then nothing is.
 - 30 s or more with no change of rhythm? Plant one rhythm break (a word at 2x, a beat of silence with no caption).
 - Any caption inside a platform UI zone or over the face? Check `qa.py --captions` sheet.
+
+## 11. Selective captioning and type tiers (2026)
+
+- **Genre decides full vs selective.** Talking-head Shorts and Reels keep full word captions (styles 1-10):
+  people start muted, and the speech is the content. **Motion-graphics reels caption 25-40% of words**, only on
+  beats (claims, numbers, turns, openings), measured on all four reference pages: constant text gets filtered
+  like a watermark. `captions.py --style 11 --keywords k.json --selective` keeps groups with a key word or a
+  number plus the setup words leading into a solo apex word, and prints the share (target 25-40%). The SRT
+  sidecar stays complete either way.
+- **One font per tier, three tiers max** (whisper/body, apex/display, label/mono), each with a job. This
+  replaces the old "one font only" rule: 2026 premium work is tiered (serif-italic display + grotesque body +
+  mono labels in one video).
+- **Emphasis budget: at most about 10% of words get premium emphasis** (box, gradient, underline bar,
+  blur-reveal); the rest pop or stay plain. Hero words up to about 2.4x body size, one or two per beat, never
+  three in a row, at most about 15 characters.
+- **2025-26 emphasis treatments** (build in HyperFrames; ASS cannot do them well):
+  underline-bar highlight (solid accent bar behind/below the active word, the word flips to the ground colour:
+  two independent codebases converge, so ship it); gradient-fill active word with tight tracking (-20 to -25)
+  at large sizes only (it reads broken under ~60 px); word box (solid box behind the active word); blur-reveal
+  on a Difference blend (blur is the transition, the word resolves sharp: allowed, unlike blur as a style);
+  traveling highlight (the highlight slides from word to word: two staggered timelines, one hides word A's
+  bar while word B's expands).
+- **Karaoke has three distinct mechanics; do not blend them:** (a) fill sweep inside each word's bounds,
+  (b) active word bright with neighbours dimmed (style 12 is the line-level version), (c) pun strike-and-
+  replace (the word strikes through and swaps).
+- **Placement ruling:** the default stays y = 0.60 on 9:16 (inside the safe box, floor at y 1248 of 1920). A
+  2026 claim that UGC captions now sit at y 0.70-0.78 comes from a single source and collides with TikTok's
+  bottom UI; use it only as an opt-in (`--y 0.72`) after checking the frame, never silently.
+- **Stroke units:** the 2-4 px outline rule is libass outline units at 1080p; caption-code guides quote 8-12 px
+  strokes at 74 px type in CSS pixels. Different units, same physics: stroke first, then fill.
+- **Bilingual captions** (CapCut / Edits auto-translate, July 2026): two-line bilingual captions are now a
+  native option. QC rule: the translation reads what the speech model heard, so a misheard word ships in both
+  languages. Fix `words.json` first, then translate.

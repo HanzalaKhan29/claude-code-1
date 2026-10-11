@@ -1,6 +1,6 @@
 # Editing grammar: cuts, pacing, retention, zooms, B-roll, sound
 
-Contents: 1 Hard rules for the rough cut · 2 Where to cut · 3 Pacing by format · 4 Retention structure · 5 Punch-ins and camera moves · 6 B-roll · 7 Sound · 8 Shorts from long-form · 9 Recording advice to give the user
+Contents: 1 Hard rules for the rough cut · 2 Where to cut · 3 Pacing by format · 4 Retention structure · 5 Punch-ins and camera moves · 6 B-roll · 7 Sound · 8 Shorts from long-form · 9 Recording advice to give the user · 10 Pacing design (gears, arc, tempo) · 11 The first seconds · 12 Thumbnail-to-video handoff · 13 B-roll timing and cutaways · 14 Working habits
 
 Evidence labels follow `design-science.md`: [STRONG] research, [INDUSTRY] platform data, [FOLK] craft practice.
 
@@ -90,9 +90,11 @@ Classify every B-roll beat first (from Tella's b-roll-finder method):
 | **Concept** | an idea with no footage | a motion graphic (motion-graphics.md) |
 | **Meme / reaction** | a cultural reference | the user supplies it (rights) |
 
-Rules: source the meaning, not the keyword (a line about "growth" does not need a stock shot of a plant); strip B-roll audio (`-an`); a slow Ken Burns of about 1.5% per second on stills; never generic stock filler (handshakes, glowing brains, server rooms), which viewers recognise and which violates the coherence principle. Free sources with licences: `tooling-research.md` section 8 (Pexels, Pixabay, Coverr, Mixkit; keep licence notes in `EDIT_STATE.md`).
+Rules: source the meaning, not the keyword (a line about "growth" does not need a stock shot of a plant); strip B-roll audio when it is noisy or contaminated (`-an`), but keep clean literal sound (room tone, the object's own sound) under it, because diegetic sound sells reality (see 13); a slow Ken Burns of about 1.5% per second on stills; never generic stock filler (handshakes, glowing brains, server rooms), which viewers recognise and which violates the coherence principle. Free sources with licences: `tooling-research.md` section 8 (Pexels, Pixabay, Coverr, Mixkit; keep licence notes in `EDIT_STATE.md`).
 
 ## 7. Sound
+
+Full craft (sourcing choice, duck numbers, SFX variation, music stops, Closed Eye Test): `sound-design.md`.
 
 - **Loudness:** -14 LUFS integrated, -1 dBTP max for YouTube and social. Platforms only turn loud uploads down; mastering hotter costs dynamics for nothing.
 - **Voice chain** (free, no ML): `highpass=f=80, afftdn, deesser, acompressor=threshold=-20dB:ratio=3:attack=5:release=80:makeup=2` then normalise once at the end (`finish.py --denoise` applies a light version). DeepFilterNet for heavier noise: 48 kHz WAV only, and use `-D` (compensate delay) or sync shifts.
@@ -118,3 +120,102 @@ Rules: source the meaning, not the keyword (a line about "growth" does not need 
 - Eyes on the lens; the face lit as the brightest large area in frame.
 - Record room tone (5 s of silence) at the start: it hides cuts and gaps.
 - Constant frame rate (phones often record variable frame rate: `probe.py` warns).
+
+## 10. Pacing design (gears, arc, tempo)
+
+- **Gears map emotion to cutting speed.** Gear 1 reflective/intimate, 2 observational, 3 progression, 4
+  tension, 5 chaos/urgency. Start from the scene's emotional destination, then pick the gear; never start
+  from "how fast should I cut". Source: Inside The Edit, youtube.com/watch?v=bCVeyUFGxi8, 02:37-04:10.
+- **Design the pacing arc across the whole film.** Pacing problems live between scenes: editors polish scenes
+  while the film dies in the transitions. Before fine-cutting, list the scenes in order with a gear each and
+  read the sequence. Source: same, 00:18-00:25 and 05:01-05:33.
+- **Two tempo rules.** Never repeat the same pattern (slow-medium-fast loops are predictable), and never put
+  two same-tempo scenes back to back. Alternate: slow -> fast -> medium -> slow. Source: same, 16:44-17:45.
+- **Long-form opening:** one continuous take of about 5-23 s before the first real cut, then accelerate. The
+  uncut open earns trust; the acceleration earns retention. [directional, small sample]
+- **Pacing factors add up:** cut speed + movement inside the shot + subject distance + camera movement. Cuts
+  plus whip-pans on close-ups feel far faster than cuts alone; a fast subject in a wide shot reads slower than
+  small head movements in an extreme close-up. Source: Inside The Edit, youtube.com/watch?v=CdyTIng0M8Q,
+  09:13-11:39.
+- **Question-driven cutting.** Every section (about every 60 s), ask what question is in the viewer's head now;
+  delay the answer or withhold just enough. Ask what the viewer should feel next, and how the cut is motivated.
+  Unfinished threads are remembered better than finished ones (Zeigarnik effect); close them at the end.
+  Source: Dylan Reynolds, youtube.com/watch?v=O0qkkexHqZw, 04:37-05:19.
+- **Cognitive load:** extraneous load to zero (messy frames, confusing edits, fancy transitions), but keep a
+  little germane load: if everything is explained, the viewer does no work and drifts. Source: Abhay PS
+  Rajawat, youtube.com/watch?v=SWAYLiH7p5M, 01:54-03:41.
+- **A small gap before the important line** mimics how people hesitate before saying something that matters;
+  leave (or create) about a beat of air there instead of cutting it out. Source: same, 01:37-01:51.
+- **Pattern breaks need an established pattern.** Build a normal rhythm first, then break it (sudden zoom,
+  full-frame change, meme). A break without a pattern just breaks flow. Rotate break types (visual, audio,
+  camera), never the same twice in a row. The widely quoted "23% retention lift" figure is fake precision;
+  ignore it. Source: same, 07:42-08:53.
+
+## 11. The first seconds
+
+- **Zero head padding:** first visible motion within 0.00-0.13 s (measured on 5 videos). No fade-in, no logo,
+  no "hey guys".
+- **Frame 1 composition:** long-form opens on the subject mid-gesture or mid-expression, never on black or a
+  title card. Shorts may open on big text (frame 1 is also the thumbnail there).
+- **The 0-3-8 s ladder:** 0 s visual hook, 3 s the promise (what this video delivers), 8 s the first payoff or
+  escalation. A missing rung is a diagnosed failure. Check it in QA.
+- **Polarity check:** does the hook take a stance (works/fails, love/hate)? Neutral summaries are the most
+  common weak hook. A diagnostic question, not a law.
+- **Hook killers:** no person in frame 1 for personality content, bio-first openings ("I'm X, I do Y"),
+  Zoom-call framing.
+- **The first 5 s read like the thumbnail:** big, legible, high contrast, one idea (MrBeast production memo).
+- 2026 distribution leans on satisfaction signals (shares, saves, rewatches, fewer "not interested") more
+  than raw watch time; design one shareable beat and one save-worthy frame. [PRACTITIONER consensus]
+
+## 12. Thumbnail-to-video handoff
+
+- **Confirm the click within 15 s** (measured ceiling about 60 s). Measure it with a stopwatch: seconds from
+  start to the first on-screen moment that delivers the thumbnail/title promise. A stricter practitioner rule
+  (visual confirmation in 5-6 s, verbal by 30 s) also circulates; both are kept.
+- **Restate, then extend:** confirm the promise, then add something the thumbnail did not contain.
+- **Never open by repeating the thumbnail text or reading the title aloud** (0 of 6 measured videos did; the
+  viewer already read it). Confirm the meaning, not the exact frame (2 of 6 confirmed the promise without
+  replicating the thumbnail frame). Small samples: direction, not law.
+- **Mute test:** watch the first 15 s muted; the promise must be visually confirmable.
+- **Pace test:** the open must match or exceed the thumbnail's energy.
+- **Keep one brand constant** (colour, mark, type treatment) from thumbnail into the video.
+- **Four failure modes:** bait-and-switch, slow confirmation, thumbnail-text continuation, register mismatch.
+  A retention cliff at 0:30 means the handoff failed: fix the open AND check the packaging's promise.
+- 40-50% of viewers gone by 0:30 is the common baseline being designed against [practitioner figure].
+- YouTube Test & Compare picks thumbnails by watch-time share, not click-through: a thumbnail that wins clicks
+  but loses the handoff loses the test.
+- Shorts are a separate system: the first frame is the thumbnail, so confirmation is immediate or the swipe
+  already happened.
+
+## 13. B-roll timing and cutaways
+
+- **Holds:** short-form 1.2-2 s per B-roll shot; long-form 3-6 s, rarely past about 10 s without a camera move
+  or annotation; charts and diagrams hold as long as the voice needs.
+- **Adjacent contrast:** never cut two similar shots together (wide after tight, bright after dark, motion
+  after still).
+- **L-cut by default** (audio leads picture); cut on phrase boundaries, never mid-word.
+- **Cut on the illustratable fact:** the picture lands on the fact it proves (documentary practice).
+- **Match cuts and audio bridges:** match on shape, motion or colour; lay the next scene's audio under the
+  last ~0.5 s of the current one to pull the viewer through. Keep motion direction continuous across cuts.
+- **Pass-by transitions:** a foreground object wiping past camera is the transition; continuous ambience
+  sells it.
+- **Two sound layers on every B-roll shot:** its literal sound plus one designed layer; an ambience bed glues
+  them.
+- **Reaction cutaways:** the effect on others gives a line its power. Hold the speaker, cut to the listener's
+  reaction, cut back; in a podcast with 2+ guests, cut to the other guest's face during a strong line.
+  Source: Dylan Reynolds (O0qkkexHqZw) 02:02-03:37.
+- **Stock first, AI second:** real footage first; AI fills only what stock cannot (see `visual-sourcing.md`).
+- Tell users who shoot: 10 s per B-roll setup (3 s pre-roll, the action, 3 s post-roll).
+
+## 14. Working habits
+
+- **Re-listen to the transcript before cutting.** The timing grid is only as good as `words.json`: fix
+  misheard names and words first.
+- **Cut what does not serve the story.** The brief's story beats decide inclusion, not the fact that footage
+  exists (anti-feature-dump).
+- **Long-form narrative build order:** dialogue scrub (e.g. 20 min to 3 min, gentle), then a ruthless second
+  pass, label each chunk by theme, build the dialogue skeleton in story order, then add music, score, field
+  recordings and SFX with zero visuals, and only then lay picture on top. Source: Max McCoy,
+  youtube.com/watch?v=XUWjBQiT1Iw, 01:08-08:54.
+- **Keep every destructive pass reversible:** a new EDL / new render version each time (`edl_v2.json`,
+  `renders/v2...`), never overwrite the previous one. Reversibility is what makes ruthless cutting safe.

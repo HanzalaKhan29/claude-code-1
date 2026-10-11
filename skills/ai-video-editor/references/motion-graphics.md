@@ -4,6 +4,8 @@ Contents: 1 Tool choice · 2 Install HyperFrames + official skills · 3 Two ways
 
 Sources: HeyGen HyperFrames official skills (Apache-2.0: `hyperframes`, `hyperframes-core`, `talking-head-recut`, `motion-doctrine`, `cut-the-curve`, `seam-craft`), the 513-prompt Opus 5.5 study (`motion-prompt-research.md`), WeAreNoCode Looks (`looks-library.md`), `design-science.md`.
 
+**Making a motion-graphics REEL** (the user's main focus: metromedia / earn.edits / earnera / lightyear style)? Read `motion-reels.md` first: it holds the measured genre grammar, and `assets/hyperframes/kinetic-reel/` is the tested starter. This file is the general HyperFrames craft underneath it.
+
 ## 1. Tool choice
 
 | Need | Use | Why |
@@ -227,5 +229,6 @@ Pacing: explainer scenes 3-6 s; narrated pieces change something about every 1.5
 
 - **Idle "breathing" motion:** one Remotion skill says idle elements should breathe; HyperFrames' doctrine bans idle wobble. This skill follows the ban: a hold should either be still (readable) or advance the story. A subtle Ken Burns on a still photo (scale about 1.0 to 1.08 over the shot) is camera intent, not wobble, and is fine.
 - **Italic emphasis:** HyperFrames caption rules ban italics for emphasis in motion; Sankhla's styles 2, 4, 5 use italic serif key words. Keep italic serif as a deliberate editorial style for single words held at least 0.6 s; never italicise running text.
-- **Glass and glow:** banned by default, allowed when the user picks a Look that includes them (Look 1, 12, 18), applied to the hero only.
+- **Glass and glow:** glow stays banned by default (allowed when the user picks a Look that includes it, e.g. Look 1, 12, 18, on the hero only). Glass is conditional: allowed faint, bordered and behind type (never on the type itself), still banned as the default chrome of a whole video; the 2026 successor is a soft ambient mesh gradient.
+- **Status pulses** (heartbeat dot, rotating dashed gear, staggered network nodes) are information, not idle wobble: allowed inside a finite timeline when they say "this is running now".
 - **Safe zone numbers differ by source** (design research: y 250-1440; platform research: y 288-1248 on 1080x1920). Use the stricter 288-1248 for anything that must be read.
