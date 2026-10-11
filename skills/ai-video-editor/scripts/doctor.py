@@ -6,6 +6,7 @@ Never installs anything itself: the agent shows the commands and asks before run
 """
 import importlib.util
 import json
+import os
 import platform
 import shutil
 import subprocess
@@ -74,6 +75,19 @@ def main():
     engines.append(check_py("faster_whisper", "faster-whisper", "fast on CPU/NVIDIA, word timestamps"))
     engines.append(check_py("whisper", "openai-whisper", "reference Whisper, slower"))
     have_engine = any(e["ok"] for e in engines) or bool(npx)
+    # Engines download their model on first use. A sandbox or firewall that blocks Hugging Face makes an
+    # "installed" engine fail late, so check reachability now (skip if a model is already cached).
+    cache = os.path.expanduser("~/.cache/huggingface/hub")
+    cached = os.path.isdir(cache) and any("whisper" in d.lower() for d in os.listdir(cache))
+    hf_ok = cached
+    if not cached:
+        try:
+            import urllib.request  # noqa: WPS433
+            urllib.request.urlopen(urllib.request.Request("https://huggingface.co", method="HEAD"), timeout=6)
+            hf_ok = True
+        except Exception:  # noqa: BLE001 - any failure means models cannot download
+            hf_ok = False
+    report["model_download"] = {"ok": hf_ok, "cached": cached}
     report["transcription"] = {"ok": have_engine, "engines": engines,
                                "fallback": "npx hyperframes transcribe <audio> --json (bundled local Whisper)"}
 
@@ -99,6 +113,10 @@ def main():
     for e in engines:
         print(f"           {'yes' if e['ok'] else 'no '} {e['name']:<16} {e['why']}"
               + ("" if e["ok"] else f"  ->  {e['install']}"))
+    if not report["model_download"]["ok"]:
+        print("  [WARN] huggingface.co unreachable and no cached Whisper model: transcription will fail on first\n"
+              "         use. Allow the host, or copy a model into ~/.cache/huggingface/hub, or transcribe elsewhere\n"
+              "         and hand over words.json.")
     print("Optional:")
     for r in report["optional"]:
         print(f"  [{'yes' if r['ok'] else 'no '}] {r['name']:<16}" + ("" if r["ok"] else f"  ->  {r['install']}"))
