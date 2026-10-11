@@ -74,11 +74,18 @@ def main():
     ap.add_argument("--cut-soft-fillers", action="store_true", help="also cut soft fillers when isolated by pauses")
     ap.add_argument("--no-retakes", action="store_true")
     ap.add_argument("--drop", action="append", default=[], help="extra source ranges to remove, e.g. 12.4-15.9")
+    ap.add_argument("--pad-before", type=float, help="override the style's lead-in before each kept word (s)")
+    ap.add_argument("--pad-after", type=float, help="override the style's tail after each kept word (s)")
+    ap.add_argument("--max-pause", type=float, help="override the longest pause left in (s)")
     ap.add_argument("--head", type=float, default=None, help="force start time (cut everything before)")
     ap.add_argument("--tail", type=float, default=None, help="force end time (cut everything after)")
     args = ap.parse_args()
 
     pad_b, pad_a, max_pause, keep_pause = STYLES[args.style]
+    pad_b = pad_b if args.pad_before is None else args.pad_before
+    pad_a = pad_a if args.pad_after is None else args.pad_after
+    max_pause = max_pause if args.max_pause is None else args.max_pause
+    keep_pause = min(keep_pause, max_pause)
     out = args.out or os.path.dirname(os.path.abspath(args.words))
     os.makedirs(out, exist_ok=True)
     words = read_json(args.words)

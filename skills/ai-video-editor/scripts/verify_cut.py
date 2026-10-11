@@ -7,7 +7,7 @@ word, missing words, and audio drifting against the planned timeline (lip-sync o
 Usage:
   python3 verify_cut.py <render.mp4> <words_cut.json> [--render-words render_words.json] [--model small]
 --render-words skips transcription if you already transcribed the render (transcribe.py --out ...).
-Exit code 1 when problems are found, so it can gate delivery.
+Exit code 1 when problems are found, so it can gate delivery; 2 when no ASR engine is available.
 """
 import argparse
 import difflib
@@ -41,8 +41,13 @@ def main():
     else:
         out = os.path.join(os.path.dirname(os.path.abspath(args.render)), "verify")
         here = os.path.dirname(os.path.abspath(__file__))
-        subprocess.run([sys.executable, os.path.join(here, "transcribe.py"), args.render, "--out", out,
-                        "--model", args.model, "--language", args.language, "--verbatim"], check=True)
+        proc = subprocess.run([sys.executable, "-I", os.path.join(here, "transcribe.py"), args.render, "--out", out,
+                               "--model", args.model, "--language", args.language, "--verbatim"])
+        if proc.returncode != 0 or not os.path.exists(os.path.join(out, "words.json")):
+            print("verify_cut: no transcription engine worked, so the ASR diff cannot run. Fall back to: "
+                  "qa.py <render> --edl edl.json (cuts.png + click check), then LISTEN to every join. "
+                  "Do not report the cut as verified.")
+            sys.exit(2)
         heard = read_json(os.path.join(out, "words.json"))
 
     a = [norm(w["text"]) for w in planned]

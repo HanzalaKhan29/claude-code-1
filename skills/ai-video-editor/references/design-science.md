@@ -38,7 +38,7 @@ Conventions used throughout:
 
 ### 1.1 Minimum on-screen text size
 
-The physics behind this: reading is fluent when the **x-height subtends about 0.2° to 2°** of visual angle (Legge & Bigelow 2011) **[STRONG]**. Below about 0.2°, reading speed collapses. A 16:9 video watched on a portrait phone is only about 3.9cm tall. At 35cm viewing distance, 0.2° is about 1.2mm, which is ~31% of the frame height. So small text in long-form is unreadable on phones unless the viewer rotates to landscape.
+The physics behind this: reading is fluent when the **x-height subtends about 0.2° to 2°** of visual angle (Legge & Bigelow 2011) **[STRONG]**. Below about 0.2°, reading speed collapses. A 16:9 video watched on a portrait phone is only about 3.9cm tall. At 35cm viewing distance, 0.2° is about 1.2mm, which is ~3.1% of the frame height. So small text in long-form is unreadable on phones unless the viewer rotates to landscape.
 
 | Context | Minimum font size (cap-to-descender em) | Comfortable | Notes |
 |---|---|---|---|

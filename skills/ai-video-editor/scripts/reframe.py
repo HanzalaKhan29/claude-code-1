@@ -87,7 +87,11 @@ def main():
         if args.x is not None:
             plan = [(0.0, args.x)]
         else:
-            plan = face_xs(args.inp, info["duration"], args.window) or [(0.0, 0.5)]
+            plan = face_xs(args.inp, info["duration"], args.window)
+            if plan is None:
+                print("WARN: opencv-python not installed, so no face tracking. Cropping the CENTRE. If the speaker "
+                      "sits off-centre, look at a frame and pass --x (e.g. --x 0.35), or pip install opencv-python.")
+            plan = plan or [(0.0, 0.5)]
         def xpx(c):
             return int(min(max(c * iw - cw / 2, 0), iw - cw))
         expr = str(xpx(plan[-1][1]))

@@ -44,11 +44,14 @@ ASS limits to know: the pill box has square corners (libass cannot round them); 
 
 ## 4. Sizing and placement
 
+- "Size" here always means the font size (the em, what `size_pct` and ASS `Fontsize` set), not the cap height. Capitals are about 0.7 em tall, so a 92 px caption has roughly 65 px capitals. When matching a reference, calibrate by the measured width of a line of text, not by eye on letter height.
+- The fonts must actually load. libass substitutes a system font silently when a family or weight is missing, and the result looks almost right but wider or narrower. `captions.py` prints a WARN when the style's font files are missing from `--fonts`; fetch them with `fetch_fonts.py`. Weights other than 400/700 are requested by legacy names ("Montserrat Black"), which the script handles.
 - Body captions: font size about 4.5-5% of frame height (48-55 px at 1080p landscape; 86-96 px at 1080x1920). Hook/punch size: 6-9%. Never below 2.6% (28 px at 1080) for anything that must be read.
 - 16:9: centred low (script default y = 0.86), but keep the bottom ~12% free of critical text on YouTube (progress bar, auto-captions).
 - 9:16: centred around y = 0.60 (1150 px of 1920). Cross-platform safe box for anything that must be read: x 120-888, y 288-1248. Below 1248 the TikTok/Reels/Shorts description and buttons cover it; the right rail (x > 780 from y 840 down) holds like/comment/share. Platforms publish no official organic pixel specs, so these are measured values that change: re-check templates for ads.
 - Faces: captions never cover the eyes or mouth. Speaker's eyes around 30-40% from the top in 9:16 so captions sit below the chin. If a frame shows overlap, move the captions (`--y`) for that video rather than shrinking them.
-- Hook text (first 1-3 s of a Short): upper middle, y about 300-600.
+- Hook text (first 1-3 s of a Short): upper middle, y about 300-600. Never two text blocks competing: while a hook title or a graphic with words is on screen, either hide the captions for those seconds or keep the two clearly separated (title top, captions low), never stacked at the same height.
+- Face fills the frame (tight vertical close-up): there is no room below the chin, so put captions in the upper third (y about 0.25-0.30) or on the chest only if the mouth stays clear. Check a frame; the default y is a starting point, not a rule.
 
 ## 5. Grouping and timing
 
@@ -64,10 +67,13 @@ ASS limits to know: the pill box has square corners (libass cannot round them); 
 
 The highlight works only because it is rare (pop-out needs one unique element among neutrals [STRONG]).
 
+- The user's explicit request wins over these defaults ("highlight every word as it is spoken" means `--highlight active`). Modes: `key` (only keywords.json words), `active` (the word being spoken), `both`, `none`; `auto` picks from the style.
 - At most one highlighted word per caption group; roughly 70% of groups plain, 20% with a slight lift, 8% a full highlight, 2% a climax.
 - Pick the word that carries the meaning of the sentence: the number, the outcome, the surprising noun, the contrast word. Not the loudest word, not a random word, not every noun.
 - Write them to `work/keywords.json`, either as plain words (`["3x", "profit"]`, matches every occurrence) or with times (`[{"text": "profit", "start": 12.3}]`, exact occurrence, edited timeline).
 - Same accent colour as the rest of the edit's graphics.
+
+Two subtitle files come out of every run. `--srt-mode access` (default) writes a proper accessibility SRT: up to 42 characters x 2 lines, at most 20 characters per second, sentence case, for YouTube upload and search. `--srt-mode design` writes the same short groups that are burned in (useful when a platform wants a sidecar that matches the picture).
 
 ## 7. Legibility on footage
 

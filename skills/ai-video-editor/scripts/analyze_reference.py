@@ -183,7 +183,7 @@ def main():
                      f"{m['face']['median_face_height_pct']}% of frame")
     lines += ["", "First cuts: " + ", ".join(fmt_tc(c)[3:] for c in merged[:20]), "",
               "NEXT: open contact.png, hook.png and shots/*.jpg. Read caption font/case/size/position/words-per-line,",
-              "graphic style, zoom/punch-in use, B-roll share and transitions. Then fill references/style-card-template.md."]
+              "graphic style, zoom/punch-in use, B-roll share and transitions. Then fill assets/style-card-template.md."]
     with open(os.path.join(out, "measurements.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
     print("\n".join(lines))

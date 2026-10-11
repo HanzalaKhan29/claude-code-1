@@ -75,6 +75,8 @@ Zoom taste from Tella's open-source add-zooms skill and WeAreNoCode:
 - Focal point about (0.5, 0.42): slightly above centre, on the face.
 - 1080p sources go soft past about 112-130%; 4K sources can go to about 150% for 1080p delivery. Tell users to record in 4K if they want aggressive zooms.
 - Do not punch in during a graphic; do not combine a punch with a camera move.
+- Zooms compound. A 9:16 crop of a 16:9 source is already a ~3.2x enlargement of the face area relative to the frame, so a 1.08 punch on top of `reframe.py` output is effectively a much tighter shot and softer. On vertical reframes keep punches at 1.05-1.08, or none.
+- One cut or two? If a removed stretch is under about 1.5 s and the framing is the same, one jump cut with a punch hides it. If two cuts would land less than about 1 s apart, merge them into one cut (cut out the whole stretch) rather than leaving a flash of a fragment.
 - Text is unreadable while it moves faster than about 10-15% of the frame width per second: animate in, then hold still.
 
 ## 6. B-roll

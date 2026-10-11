@@ -4,6 +4,9 @@ Goal: a style card of measured rules, each with a reason and an example timestam
 
 ## 1. Get the references
 
+- Store everything under `work/refs/<name>/` in the project folder so later sessions can reuse the measurements.
+- Only one reference video? Measure it anyway, but mark every rule "seen once" and tell the user which rules may be one-off choices (a single punch-in, a one-time colour). Ask for a second video before treating them as the creator's style.
+- The user only wants a breakdown ("what makes this editing style work?") and no edit: skip the intake questions and go straight to measuring and explaining.
 - Ask for 1-3 videos of the same format the user is making (a creator's Shorts and long-form are different styles).
 - Download only with the user's go-ahead: `python3 scripts/analyze_reference.py "<url>"` (yt-dlp, at most 1080p). Respect the platform's terms; this is for private analysis, not re-upload. If YouTube blocks yt-dlp (it now sometimes needs a JS runtime or cookies: `--cookies-from-browser chrome`), ask the user to download the file and drop it in.
 - Long videos: analyse the first 3 minutes plus one middle chunk; the opening is where styles differ most. `yt-dlp --download-sections "*00:00-03:00"`.

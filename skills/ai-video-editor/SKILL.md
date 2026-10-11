@@ -87,7 +87,7 @@ python3 scripts/render_cut.py work/edl.json renders/v1_roughcut.mp4 --punch 1.08
 
 Watch every edit point (`qa.py` builds a before/after sheet for each) and run the listening pass: `python3 scripts/verify_cut.py renders/v1_roughcut.mp4 work/words_cut.json` transcribes the render and flags clipped or ghost words and sync drift. Keep `--punch` at or below 1.12 on 1080p sources; 4K sources can go to about 1.5.
 
-Need a vertical version of horizontal footage? `python3 scripts/reframe.py in.mp4 out_9x16.mp4` (face-centred static crop per section; `--mode blurfit` for slides or two people). Never just letterbox a 16:9 edit for Shorts.
+Need a vertical version of horizontal footage? `python3 scripts/reframe.py in.mp4 out_9x16.mp4` (face-centred static crop per section; `--mode blurfit` for slides or two people). Never just letterbox a 16:9 edit for Shorts. A vertical crop already enlarges the face, so keep `--punch` at 1.05-1.08 (or off) on reframed footage.
 
 **Story before polish.** For long-form, check the structure against `references/editing-grammar.md` (hook in the first seconds that confirms the title/thumbnail promise, proof within 30 s, re-hooks, no "thanks for watching" outro before the payoff). Suggest reordering when the strongest moment is buried, but never reorder without a yes.
 
@@ -137,6 +137,8 @@ python3 scripts/captions.py work/words_cut.json --video renders/v2.mp4 --style 6
 | 8 | karaoke | words light up as spoken, 3-5 words |
 | 9 | hindi | Devanagari-safe (Noto Sans Devanagari), outline, extra line height |
 | 10 | minimal | sentence-case medium sans, up to 2 lines, for calm long-form |
+
+`--highlight key|active|both|none` sets what gets coloured (the user's request wins over the style default). If the script prints `WARN fonts missing`, fetch them first: a missing font is silently substituted and the captions look subtly wrong.
 
 Rules for every style (reasons in `references/captions.md`): body captions about 4 to 5% of frame height; key word chosen by **meaning**, never at random, at most one per caption group; captions never cover the face; 9:16 captions stay inside the cross-platform safe box (y 288 to 1248 of 1920; the script defaults to y = 0.60); each caption on screen at least 0.5 s; break groups on breaths and sentence ends. Also export the `.srt` for YouTube upload (accessibility and search). For designed, behind-the-subject cinematic captions use HyperFrames `/embedded-captions` (see `references/captions.md`).
 

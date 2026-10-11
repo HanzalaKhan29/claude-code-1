@@ -131,7 +131,8 @@ def main():
                 a = int(h) * 3600 + int(m) * 60 + float(s)
                 b = int(h2) * 3600 + int(m2) * 60 + float(s2)
                 times.append((a + b) / 2)
-        sample = sorted(set(round(t, 1) for t in times))[::3][:24]
+        last = info["duration"] - 0.05  # never sample past the end (ffmpeg returns no frame)
+        sample = sorted(set(round(t, 1) for t in times if t < last))[::3][:24]
         cp = [frame_at(args.video, t, os.path.join(out, f"_k{i:03d}.png"), 480) for i, t in enumerate(sample)]
         if cp:
             tile(cp, os.path.join(out, "captions.png"), cols=4)

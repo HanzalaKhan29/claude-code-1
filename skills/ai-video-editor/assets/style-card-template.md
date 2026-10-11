@@ -12,6 +12,8 @@ Each rule: the measured value, why it works for the viewer, where it was seen (v
 | Cuts per minute (first 30 s / after) | / | | |
 | Jump-cut handling (punch-in %, alternation) | | | |
 | Pauses kept between thoughts | ms | | |
+| Where cuts fall (sentence end / mid-sentence / on the beat) | | | |
+| Speech rate after editing | wpm | | |
 | Cut tool settings | `plan_cuts.py --style ...`, `render_cut.py --punch ...` | | |
 
 ## First 30 seconds (beat list)
@@ -29,6 +31,9 @@ Each rule: the measured value, why it works for the viewer, where it was seen (v
 | Words per group, lines | | | |
 | Highlight colour and logic | | | |
 | Entrance (pop / fade / karaoke / none) | | | |
+| Caption lead vs voice onset | ms | | |
+| Caption groups aligned with cuts? | | | |
+| Share of runtime with captions on screen | % | | |
 | Outline / shadow / box | | | |
 | Tool mapping | `captions.py --style N --style-json {...}` | | |
 
