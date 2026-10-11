@@ -6,6 +6,8 @@ import subprocess
 import sys
 from fractions import Fraction
 
+sys.dont_write_bytecode = True
+
 
 def die(msg, code=1):
     print(f"ERROR: {msg}", file=sys.stderr)
@@ -171,29 +173,26 @@ def detect_cuts(path, hard=0.3, soft_floor=0.02, spike=4.0, window=15):
 
 
 def contact_sheet(path, out_png, every=2.0, cols=6, width=320, start=0.0, end=None):
-    """Tile one frame every `every` seconds into a single PNG with timestamps burned in."""
+    """Tile one frame every `every` seconds into one PNG, each labelled with its TRUE source time.
+    (select picks the frame at t=start, start+every, ...; the label is drawn from that frame's own pts.)"""
     info = probe(path)
     dur = (end or info["duration"]) - start
-    n = max(1, int(dur / every))
+    n = max(1, int(dur / every) + 1)
     rows = max(1, -(-n // cols))
-    vf = (
-        f"fps=1/{every},scale={width}:-2,"
-        "drawtext=text='%{pts\\:hms}':x=6:y=6:fontsize=18:fontcolor=white:box=1:boxcolor=black@0.6,"
-        f"tile={cols}x{rows}:padding=4:margin=4"
-    )
+    sel = f"select='isnan(prev_selected_t)+gte(t-prev_selected_t\\,{every}-0.001)'"
+    label = ("drawtext=text='%{pts\\:hms}':x=6:y=6:fontsize=18:fontcolor=white:box=1:boxcolor=black@0.6")
+    tile = f"tile={cols}x{rows}:padding=4:margin=4"
     cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y"]
     if start:
-        cmd += ["-ss", f"{start}"]
+        cmd += ["-ss", f"{start}", "-copyts"]
     cmd += ["-i", path]
     if end:
-        cmd += ["-t", f"{dur}"]
-    cmd += ["-vf", vf, "-frames:v", "1", out_png]
-    proc = run(cmd, check=False)
-    if proc.returncode != 0:
-        # drawtext needs a font; retry without timestamps
-        vf2 = f"fps=1/{every},scale={width}:-2,tile={cols}x{rows}:padding=4:margin=4"
-        cmd[cmd.index("-vf") + 1] = vf2
-        run(cmd)
+        cmd += ["-to", f"{end}"]
+    base = cmd[:]
+    proc = run(base + ["-vf", f"{sel},scale={width}:-2,{label},{tile}", "-frames:v", "1", "-fps_mode", "vfr",
+                       out_png], check=False)
+    if proc.returncode != 0:  # drawtext needs a font; retry without labels
+        run(base + ["-vf", f"{sel},scale={width}:-2,{tile}", "-frames:v", "1", "-fps_mode", "vfr", out_png])
     return out_png
 
 
@@ -207,22 +206,28 @@ def frame_at(path, t, out_png, width=None):
 
 
 def dominant_colors(path, t, k=5):
-    """Return k dominant hex colors of the frame at time t. Pure python: ffmpeg -> 64x36 raw RGB."""
+    """k dominant colours of the frame at time t, as the MEAN colour of each cluster (usable as brand hex),
+    with its share of the frame. Pure python: ffmpeg -> 96x54 raw RGB, 16-level buckets, averaged."""
     proc = subprocess.run([
         "ffmpeg", "-hide_banner", "-loglevel", "error", "-ss", f"{t:.3f}", "-i", path,
-        "-frames:v", "1", "-vf", "scale=64:36", "-f", "rawvideo", "-pix_fmt", "rgb24", "-",
+        "-frames:v", "1", "-vf", "scale=96:54", "-f", "rawvideo", "-pix_fmt", "rgb24", "-",
     ], capture_output=True)
     raw = proc.stdout
     if not raw:
         return []
     buckets = {}
     for i in range(0, len(raw) - 2, 3):
-        r, g, b = raw[i] >> 4, raw[i + 1] >> 4, raw[i + 2] >> 4  # 16 levels per channel
-        buckets[(r, g, b)] = buckets.get((r, g, b), 0) + 1
-    top = sorted(buckets.items(), key=lambda kv: -kv[1])[:k]
+        r, g, b = raw[i], raw[i + 1], raw[i + 2]
+        key = (r >> 4, g >> 4, b >> 4)
+        acc = buckets.setdefault(key, [0, 0, 0, 0])
+        acc[0] += r
+        acc[1] += g
+        acc[2] += b
+        acc[3] += 1
+    top = sorted(buckets.values(), key=lambda a: -a[3])[:k]
     total = len(raw) // 3
-    return [{"hex": "#%02X%02X%02X" % (r * 17, g * 17, b * 17), "share": round(c / total, 3)}
-            for (r, g, b), c in top]
+    return [{"hex": "#%02X%02X%02X" % (a[0] // a[3], a[1] // a[3], a[2] // a[3]), "share": round(a[3] / total, 3)}
+            for a in top]
 
 
 def write_json(obj, path):

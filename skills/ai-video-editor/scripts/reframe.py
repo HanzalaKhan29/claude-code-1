@@ -18,6 +18,7 @@ import statistics
 import subprocess
 import sys
 
+sys.dont_write_bytecode = True  # keep the installed skill folder clean
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import die, need, probe  # noqa: E402
 

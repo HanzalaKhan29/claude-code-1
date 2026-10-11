@@ -17,6 +17,7 @@ import subprocess
 import sys
 import tempfile
 
+sys.dont_write_bytecode = True  # keep the installed skill folder clean
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import die, need, probe, read_json, run  # noqa: E402
 

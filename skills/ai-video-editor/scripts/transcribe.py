@@ -20,6 +20,7 @@ import shutil
 import subprocess
 import sys
 
+sys.dont_write_bytecode = True  # keep the installed skill folder clean
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import die, fmt_tc, need, read_json, run, write_json  # noqa: E402
 

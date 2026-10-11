@@ -14,6 +14,7 @@ import sys
 import urllib.parse
 import urllib.request
 
+sys.dont_write_bytecode = True  # keep the installed skill folder clean
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 UA = "Mozilla/5.0"  # minimal UA -> Google serves truetype URLs

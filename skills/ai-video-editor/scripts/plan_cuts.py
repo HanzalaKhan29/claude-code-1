@@ -19,6 +19,7 @@ import os
 import re
 import sys
 
+sys.dont_write_bytecode = True  # keep the installed skill folder clean
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import fmt_tc, probe, read_json, silences, write_json  # noqa: E402
 

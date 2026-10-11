@@ -8,6 +8,7 @@ import argparse
 import os
 import sys
 
+sys.dont_write_bytecode = True  # keep the installed skill folder clean
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import contact_sheet, loudness, need, probe, run, silences, write_json  # noqa: E402
 

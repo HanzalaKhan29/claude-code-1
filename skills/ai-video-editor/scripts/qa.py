@@ -15,6 +15,7 @@ import os
 import re
 import sys
 
+sys.dont_write_bytecode = True  # keep the installed skill folder clean
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import contact_sheet, detect_cuts, frame_at, loudness, probe, read_json, run, silences  # noqa: E402
 
