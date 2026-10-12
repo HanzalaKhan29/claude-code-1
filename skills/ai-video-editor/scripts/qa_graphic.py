@@ -38,6 +38,8 @@ def main():
     ap.add_argument("graphic")
     ap.add_argument("--out")
     ap.add_argument("--times", help="comma-separated sample times; default 6 evenly spaced")
+    ap.add_argument("--beats", default="", help="intended hard-cut/pop times (s), e.g. the BEATS of a kinetic reel: "
+                    "spikes within 2 frames of these are design, not glitches")
     args = ap.parse_args()
     need("ffmpeg")
     info = probe(args.graphic)
@@ -74,7 +76,11 @@ def main():
         a, b, c = ydif[i - 1], ydif[i], ydif[i + 1]
         if b > 4 and b > 3 * max(a, 0.5) and b > 3 * max(c, 0.5):
             pops.append(round(i / fps, 3))
-    print("PASS no single-frame pops" if not pops else f"WARN possible single-frame pops at {pops[:10]} s")
+    beats = [float(b) for b in args.beats.split(",") if b.strip()]
+    pops = [p for p in pops if not any(abs(p - b) <= 2.0 / fps for b in beats)]
+    print("PASS no single-frame pops" if not pops else
+          f"WARN possible single-frame pops at {pops[:10]} s (if these are your intended beat changes, pass them "
+          "with --beats; never soften a designed hard pop into a fade to silence this)")
 
     times = [float(x) for x in args.times.split(",")] if args.times else [dur * k / 7 for k in range(1, 7)]
     for bg, color in (("black", "black"), ("white", "white"), ("grey", "0x808080")):

@@ -89,6 +89,8 @@ def main():
     ap.add_argument("--out", default=None)
     ap.add_argument("--cookies-from-browser", dest="cookies")
     ap.add_argument("--list-only", action="store_true")
+    ap.add_argument("--accept-recent", action="store_true",
+                    help="proceed when the platform gave no view/like counts (the list is then MOST RECENT, not top)")
     ap.add_argument("--entries-json", help=argparse.SUPPRESS)  # offline testing: pre-fetched entries
     args = ap.parse_args()
     if not shutil.which("yt-dlp") and not args.entries_json:
@@ -117,6 +119,12 @@ def main():
     for i, e in enumerate(top, 1):
         print(f"  {i:2d}. {e.get(metric) if metric in ('views', 'likes') else '-':>10}  "
               f"{(e.get('title') or '')[:50]:<50}  {e['url']}")
+    if metric.startswith("none"):
+        print("\nWARNING: no view or like counts were available, so this is the MOST RECENT posts, not the top ones. "
+              "Never call these 'their best edits'.")
+        if not args.list_only and not args.accept_recent:
+            die("ask the user: measure the most recent posts anyway (--accept-recent), or collect the top post URLs "
+                "by hand into urls.txt and use --urls")
     if args.list_only:
         return
     here = os.path.dirname(os.path.abspath(__file__))
@@ -127,6 +135,9 @@ def main():
         proc = subprocess.run([sys.executable, os.path.join(here, "analyze_reference.py"), e["url"], "--out", out])
         if proc.returncode == 0:
             done.append(out)
+    if len(done) < 2:
+        print("\nWARNING: fewer than 2 videos measured. Every rule from a single video is 'seen once': label it so "
+              "on the style card and ask for more references before treating it as their style.")
     print(f"\nMeasured {len(done)}/{len(top)}. Next: python3 {os.path.join(here, 'compare_refs.py')} "
           f"{os.path.join(name, '*')} --out {name}")
 

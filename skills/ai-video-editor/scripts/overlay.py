@@ -50,8 +50,18 @@ def main():
         if f.lower().endswith(".webm"):
             inputs += ["-c:v", "libvpx-vp9"]
         inputs += ["-i", f]
-        at = float(g["at"])
+        # "climax": seconds into the graphic where its key moment lands (count stops, word slams). With it, "at"
+        # is the spoken word's time and the graphic starts early so the climax lands ON the word.
+        at = float(g["at"]) - float(g.get("climax", 0.0))
         dur = float(g.get("dur") or gi["duration"])
+        if at >= base["duration"]:
+            die(f"{f} starts at {at:.2f}s, after the video ends ({base['duration']:.2f}s): it would never appear")
+        if at < 0:
+            die(f"{f}: climax offset pushes the start before 0 s ({at:.2f}s)")
+        if at + dur > base["duration"] + 0.5:
+            print(f"WARN {f} runs {at + dur - base['duration']:.2f}s past the end of the video: it will be cut off")
+        if gi.get("fps") and base.get("fps") and abs(gi["fps"] - base["fps"]) > 0.5:
+            print(f"WARN {f} is {gi['fps']} fps but the edit is {base['fps']} fps: render graphics at the edit's fps")
         mode = g.get("mode", "overlay")
         lab = f"[g{k}]"
         trim = f"trim=duration={dur:.3f}," if g.get("dur") else ""

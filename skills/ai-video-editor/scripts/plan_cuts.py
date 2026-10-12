@@ -21,8 +21,10 @@ import sys
 
 sys.dont_write_bytecode = True  # keep the installed skill folder clean
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _common import fmt_tc, probe, read_json, silences, write_json  # noqa: E402
+from _common import die, fmt_tc, loudness, probe, read_json, silences, vfr_check, write_json  # noqa: E402
 
+HESITATION = {"sorry", "wait", "again", "redo", "restart", "hold", "on", "let", "me", "start", "over", "okay", "ok",
+              "no", "actually", "uh", "um", "hmm", "one", "more", "time", "take"}
 HARD_FILLERS = {"um", "umm", "uh", "uhh", "uhm", "er", "erm", "ah", "ahh", "hmm", "hm", "mm", "mmm", "eh"}
 SOFT_FILLERS = {"like", "basically", "actually", "literally", "right", "okay", "so", "matlab", "toh", "na",
                 "haan", "accha", "yaani", "bas"}
@@ -73,6 +75,9 @@ def main():
                     help="default: soft fillers (like, so, you know) are only flagged, not cut")
     ap.add_argument("--cut-soft-fillers", action="store_true", help="also cut soft fillers when isolated by pauses")
     ap.add_argument("--no-retakes", action="store_true")
+    ap.add_argument("--allow-vfr", action="store_true", help="proceed on variable-frame-rate footage (drift risk)")
+    ap.add_argument("--drop-silent-words", action="store_true",
+                    help="drop low-confidence words that sit inside a silence (likely Whisper hallucinations)")
     ap.add_argument("--drop", action="append", default=[], help="extra source ranges to remove, e.g. 12.4-15.9")
     ap.add_argument("--pad-before", type=float, help="override the style's lead-in before each kept word (s)")
     ap.add_argument("--pad-after", type=float, help="override the style's tail after each kept word (s)")
@@ -92,8 +97,16 @@ def main():
     if isinstance(words, dict):
         words = words.get("words", [])
     pinfo = probe(args.video)
+    if not args.allow_vfr and vfr_check(args.video):
+        die("variable frame rate source: every frame-grid snap would drift. Re-encode first: ffmpeg -i in -vf "
+            f"fps={round(pinfo.get('r_fps') or pinfo.get('fps') or 30)} -c:v libx264 -crf 16 -c:a aac cfr.mp4 "
+            "(or --allow-vfr to proceed anyway)")
     dur, fps = pinfo["duration"], (pinfo.get("fps") or 30)
-    sil = silences(args.video, noise_db=-38, min_dur=0.12)
+    # Silence threshold calibrated to this recording: about 22 dB under the speech level (a fixed -38 dB misses
+    # every pause on a quiet speaker and "finds" pauses inside a music bed).
+    speech = (loudness(args.video) or {}).get("integrated_lufs")
+    noise_db = max(-55.0, min(-30.0, speech - 22.0)) if speech is not None else -38.0
+    sil = silences(args.video, noise_db=noise_db, min_dur=0.12)
 
     drop = {}  # word index -> reason
     toks = [norm(w["text"]) for w in words]
@@ -112,7 +125,7 @@ def main():
             if t == a and i + 1 < len(toks) and toks[i + 1] == b:
                 soft_flags += [i, i + 1]
 
-    retakes = []
+    retakes, suspect = [], []
     if not args.no_retakes:
         ph = phrases(words)
         for pi, p in enumerate(ph):
@@ -120,7 +133,14 @@ def main():
             for qj in range(pi + 1, min(pi + 4, len(ph))):
                 b = [toks[i] for i in ph[qj] if i not in drop]
                 if similar_start(a, b):
-                    # every phrase from p up to (not incl.) the restart is the abandoned take
+                    # The abandoned take is phrase p. Anything between it and the restart is only removed when it is
+                    # hesitation ("sorry, let me redo that"); a real sentence in between means this is probably not
+                    # a retake at all, so keep everything and flag it for a human instead.
+                    middle = [k for pk in range(pi + 1, qj) for k in ph[pk] if k not in drop]
+                    if any(toks[k] not in HESITATION and toks[k] not in SOFT_FILLERS for k in middle):
+                        suspect.append({"text": " ".join(words[k]["text"] for k in p), "at": words[p[0]]["start"],
+                                        "why": "looks like a restart, but real speech sits between: kept both"})
+                        break
                     for pk in range(pi, qj):
                         for i in ph[pk]:
                             drop.setdefault(i, "retake (kept the later take)")
@@ -145,19 +165,33 @@ def main():
 
     keep_idx = [i for i in range(len(words)) if i not in drop]
     if not keep_idx:
-        print("Nothing left to keep.")
-        return
+        die("nothing left to keep: every word was dropped (check --drop/--head/--tail)")
+    # Whisper invents words over silence. A low-confidence word sitting entirely inside a detected silence is a
+    # hallucination suspect: flagged in cutlist.md for review (dropped only with --drop-silent-words).
+    for i in keep_idx:
+        w = words[i]
+        if w.get("prob", 1.0) < 0.45 and any(a <= w["start"] and w["end"] <= b for a, b in sil):
+            suspect.append({"text": w["text"], "at": w["start"], "why": "low-confidence word over silence (hallucination?)"})
+            if args.drop_silent_words:
+                drop[i] = "hallucination suspect (over silence)"
+    keep_idx = [i for i in range(len(words)) if i not in drop]
+
+    snap_stats = {"total": 0, "snapped": 0}
 
     def snap(t, direction):
         """Move a boundary into a nearby silence so we never clip a breath or consonant."""
+        snap_stats["total"] += 1
         for a, b in sil:
             if a - 0.02 <= t <= b + 0.02:
+                snap_stats["snapped"] += 1
                 return t
         best = None
         for a, b in sil:
             cand = b - 0.03 if direction == "start" else a + 0.03
             if abs(cand - t) <= 0.12 and (best is None or abs(cand - t) < abs(best - t)):
                 best = cand
+        if best is not None:
+            snap_stats["snapped"] += 1
         return best if best is not None else t
 
     # group kept words into runs; split a run where the pause is too long (pause compression)
@@ -190,14 +224,26 @@ def main():
                          "first_word": a, "last_word": b,
                          "text": " ".join(words[j]["text"] for j in range(a, b + 1) if j not in drop)})
 
-    # merge overlaps and drop micro-segments
+    # merge overlaps; a short segment that holds kept words is widened to 0.25 s, never dropped (a lone "I" or
+    # "no" is still speech, and dropping it would delete it from the video AND the captions)
     merged = []
     for s in segments:
         if merged and s["start"] <= merged[-1]["end"] + 0.02:
             merged[-1]["end"] = max(merged[-1]["end"], s["end"])
             merged[-1]["last_word"] = s["last_word"]
             merged[-1]["text"] += " " + s["text"]
-        elif s["end"] - s["start"] >= 0.25:
+            continue
+        if s["end"] - s["start"] < 0.25:
+            lo = words[s["first_word"] - 1]["end"] if s["first_word"] > 0 else 0.0
+            hi = words[s["last_word"] + 1]["start"] if s["last_word"] + 1 < len(words) else dur
+            need = 0.25 - (s["end"] - s["start"])
+            s["start"] = max(lo, s["start"] - need / 2)
+            s["end"] = min(hi, s["start"] + 0.25)
+        if merged and s["start"] <= merged[-1]["end"] + 0.02:
+            merged[-1]["end"] = max(merged[-1]["end"], s["end"])
+            merged[-1]["last_word"] = s["last_word"]
+            merged[-1]["text"] += " " + s["text"]
+        else:
             merged.append(s)
     # snap to the frame grid (render_cut.py does the same), so caption times match the render exactly
     snapped = []
@@ -235,7 +281,8 @@ def main():
     edl = {"source": os.path.abspath(args.video), "style": args.style, "source_duration": round(dur, 2),
            "edited_duration": new_dur, "removed_seconds": round(dur - new_dur, 2),
            "segments": [{"start": s["start"], "end": s["end"], "text": s["text"]} for s in segments],
-           "removed": removed, "retakes": retakes,
+           "removed": removed, "retakes": retakes, "review": suspect,
+           "silence_threshold_db": round(noise_db, 1), "boundaries_snapped": snap_stats,
            "soft_fillers_flagged": sorted({words[i]["start"] for i in soft_flags})}
     write_json(edl, os.path.join(out, "edl.json"))
     write_json(words_cut, os.path.join(out, "words_cut.json"))
@@ -254,9 +301,26 @@ def main():
     if soft_flags:
         lines += ["", f"## Soft fillers flagged but kept ({len(set(soft_flags))}): decide per case "
                       "(`--cut-soft-fillers` or `--drop a-b`)"]
+    if suspect:
+        lines += ["", "## Review these (not decided automatically)"]
+        for r in suspect:
+            lines.append(f"- @{r['at']:.1f}s \"{r['text'][:90]}\": {r['why']}")
+    kept_words = len([i for i in range(len(words)) if i not in drop])
+    lines += ["", f"Checks: silence threshold {noise_db:.0f} dB (calibrated to speech), "
+                  f"{snap_stats['snapped']}/{snap_stats['total']} boundaries landed in silence, "
+                  f"{len(words_cut)}/{kept_words} kept words placed on the edited timeline."]
+    if kept_words != len(words_cut):
+        lines.append(f"WARNING: {kept_words - len(words_cut)} kept word(s) are missing from words_cut.json. "
+                     "Do not render: report this as a bug.")
+    if snap_stats["total"] and snap_stats["snapped"] / snap_stats["total"] < 0.5:
+        lines.append("WARNING: under half the cut points found a silence (music bed, noisy room or wrong threshold). "
+                     "Cuts may clip breaths or consonants: listen to every join, consider --style loose.")
     with open(os.path.join(out, "cutlist.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
     print("\n".join(lines[:4]))
+    for ln in lines:
+        if ln.startswith(("WARNING", "Checks")):
+            print(ln)
     print(f"Wrote {out}/edl.json, cutlist.md, words_cut.json")
 
 

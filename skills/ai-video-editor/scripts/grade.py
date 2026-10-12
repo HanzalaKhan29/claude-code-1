@@ -56,7 +56,13 @@ def mean_rgb(path, samples=12):
 
 def match_filter(src, ref):
     a, b = mean_rgb(src), mean_rgb(ref)
-    gains = [min(1.33, max(0.75, (b[i] + 1) / (a[i] + 1))) for i in range(3)]
+    raw = [(b[i] + 1) / (a[i] + 1) for i in range(3)]
+    gains = [min(1.33, max(0.75, g)) for g in raw]
+    if any(abs(g - r) > 1e-6 for g, r in zip(gains, raw)):
+        print("WARN match gains hit the 0.75-1.33 limit: the shots are too different for a global match "
+              "(mixed lighting? different exposure?). Fix exposure first and check skin on a --still.")
+    if max(gains) > 1.15:
+        print("WARN strong gain (>1.15): faces and highlights may clip. Check the brightest skin on a --still.")
     print(f"Match: source mean RGB {[round(x) for x in a]} -> reference {[round(x) for x in b]}; "
           f"gains R{gains[0]:.3f} G{gains[1]:.3f} B{gains[2]:.3f}")
     return f"colorchannelmixer=rr={gains[0]:.4f}:gg={gains[1]:.4f}:bb={gains[2]:.4f}"
@@ -71,17 +77,20 @@ def color_chain(args, match=None):
     return ",".join(parts)
 
 
-def build_graph(args, match=None):
+def build_graph(args, match=None, height=1080, hdr=False):
     chain = color_chain(args, match) or "null"
+    # HDR (PQ/HLG) source: tone-map to SDR BT.709 before anything else (both the graded and the original branch)
+    pre = ("zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,"
+           "zscale=t=bt709:m=bt709:r=tv," if hdr else "")
     g = []
     if args.strength < 1.0:
-        g.append(f"[0:v]format=yuv444p,split[o][c];[c]{chain}[g];"
+        g.append(f"[0:v]{pre}format=yuv444p,split[o][c];[c]{chain}[g];"
                  f"[o][g]blend=all_mode=normal:all_opacity={args.strength:.3f}[graded]")
     else:
-        g.append(f"[0:v]format=yuv444p,{chain}[graded]")
+        g.append(f"[0:v]{pre}format=yuv444p,{chain}[graded]")
     last = "[graded]"
     if args.glow > 0:
-        g.append(f"{last}split[gb][gh];[gh]curves=all='0/0 0.62/0 1/1',gblur=sigma=18[gl];"
+        g.append(f"{last}split[gb][gh];[gh]curves=all='0/0 0.62/0 1/1',gblur=sigma={18 * height / 1080:.1f}[gl];"
                  f"[gb][gl]blend=all_mode=screen:all_opacity={args.glow:.3f}[glowed]")
         last = "[glowed]"
     tail = "format=yuv420p"
@@ -122,7 +131,9 @@ def main():
     ap.add_argument("out", nargs="?")
     ap.add_argument("--look", choices=list(LOOKS))
     ap.add_argument("--lut", help="apply a .cube LUT")
-    ap.add_argument("--strength", type=float, default=1.0, help="0..1 mix of the graded image over the original")
+    ap.add_argument("--strength", type=float, default=None,
+                    help="0..1 mix of the graded image over the original (default 1.0; 0.75 when only --lut is given)")
+    ap.add_argument("--tonemap", action="store_true", help="the source is HDR (HLG/PQ): tone-map to SDR first")
     ap.add_argument("--match", help="reference video/image to match exposure and white balance to")
     ap.add_argument("--grain", type=float, default=0.0, help="film grain percent, 1-5 is the useful range")
     ap.add_argument("--glow", type=float, default=0.0, help="highlight glow opacity, 0.15-0.35 is subtle")
@@ -138,12 +149,27 @@ def main():
             return
     if not args.inp:
         ap.error("give an input video")
-    if not (args.look or args.lut or args.match or args.grain or args.glow):
+    if args.look and args.lut:
+        die("--look and --lut together grade twice (oversaturated, shifted skin). Use one.")
+    if args.strength is None:
+        args.strength = 0.75 if (args.lut and not args.look) else 1.0  # creative LUTs belong at 40-80%
+    base = os.path.basename(args.inp).lower()
+    if "caption" in base:
+        print("WARN this looks like a captioned file: grade BEFORE captions (captions are never graded).")
+    if "grade" in base:
+        print("WARN this looks like an already-graded file: grading again stacks warmth (orange skin). "
+              "Grade from the ungraded master.")
+    if not (args.look or args.lut or args.match or args.grain or args.glow or args.tonemap):
         ap.error("nothing to do: give --look, --lut, --match, --grain or --glow")
     if args.lut and not os.path.exists(args.lut):
         die(f"LUT not found: {args.lut}")
+    src = probe(args.inp)
+    hdr = src.get("color_transfer") in ("smpte2084", "arib-std-b67")
+    if hdr and not args.tonemap:
+        die(f"HDR source ({src.get('color_transfer')}): grading it as SDR ships wrong colour everywhere. "
+            "Re-run with --tonemap (tone-maps to SDR BT.709 first).")
     match = match_filter(args.inp, args.match) if args.match else None
-    graph = build_graph(args, match)
+    graph = build_graph(args, match, src.get("height") or 1080, hdr and args.tonemap)
     if args.still is not None:
         sgraph = graph.replace("[0:v]", "[0:v]split[before][src];[src]", 1).replace("[v]", "[after]")
         sgraph += ";[before]format=yuv420p[b2];[b2][after]hstack[v]"

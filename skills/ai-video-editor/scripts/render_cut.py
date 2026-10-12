@@ -35,7 +35,8 @@ def snap(segs, fps):
     return out
 
 
-def build_graph(segs, info, punch, center, fade_s, scale_to, index_offset=0, video=True, audio=True):
+def build_graph(segs, info, punch, center, fade_s, scale_to, index_offset=0, video=True, audio=True,
+                no_punch=frozenset()):
     w, h = info["width"], info["height"]
     tw, th = scale_to
     parts, labels = [], []
@@ -47,8 +48,9 @@ def build_graph(segs, info, punch, center, fade_s, scale_to, index_offset=0, vid
             pass
         else:
             v = f"[0:v]trim=start={a:.6f}:end={b:.6f},setpts=PTS-STARTPTS"
-            if punch and punch > 1.0 and (i + index_offset) % 2 == 1:
-                cw, ch = int(w / punch) // 2 * 2, int(h / punch) // 2 * 2
+            if punch and punch > 1.0 and (i + index_offset) % 2 == 1 and (i + index_offset) not in no_punch:
+                cw = int(w / punch) // 2 * 2
+                ch = int(round(cw * h / w / 2)) * 2  # derive from width so the crop keeps the exact aspect
                 cx = min(max(0, int(w * center[0] - cw / 2)), w - cw)
                 cy = min(max(0, int(h * center[1] - ch / 2)), h - ch)
                 v += f",crop={cw}:{ch}:{cx}:{cy}"
@@ -71,7 +73,7 @@ def build_graph(segs, info, punch, center, fade_s, scale_to, index_offset=0, vid
 def encode(src, graph, out, info, crf, preview, has_a):
     fps = round(info["fps"]) or 30
     cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostats", "-y", "-i", src,
-           "-filter_complex", graph, "-map", "[v]", "-fps_mode", "cfr"]
+           "-filter_complex", graph, "-map", "[v]", "-fps_mode", "cfr", "-r", str(info.get("fps_fraction") or fps)]
     if has_a:
         cmd += ["-map", "[a]", "-c:a", "aac", "-b:a", "192k", "-ar", "48000"]
     cmd += ["-c:v", "libx264", "-preset", "veryfast" if preview else "medium", "-crf", str(28 if preview else crf),
@@ -89,7 +91,10 @@ def main():
     ap.add_argument("out")
     ap.add_argument("--punch", type=float, default=0.0)
     ap.add_argument("--punch-center", default="0.5,0.4")
-    ap.add_argument("--fade-ms", type=float, default=20)
+    ap.add_argument("--fade-ms", type=float, default=30,
+                    help="de-click fade at every join (30 ms: 20 ms is shorter than one AAC frame)")
+    ap.add_argument("--no-punch", default="", help="edited-timeline ranges with no punch-in, e.g. '12-15.5,30-34' "
+                    "(where graphics or captions-heavy moments sit; never punch under a graphic)")
     ap.add_argument("--crf", type=int, default=18)
     ap.add_argument("--preview", action="store_true")
     args = ap.parse_args()
@@ -104,6 +109,14 @@ def main():
     if not segs:
         die("EDL has no segments")
     center = tuple(float(x) for x in args.punch_center.split(","))
+    no_punch, t = set(), 0.0
+    ranges = [tuple(float(v) for v in r.split("-")) for r in args.no_punch.split(",") if r.strip()]
+    for i, sg in enumerate(segs):
+        d = sg["end"] - sg["start"]
+        if any(t < hi and t + d > lo for lo, hi in ranges):
+            no_punch.add(i)
+        t += d
+    no_punch = frozenset(no_punch)
     w, h = info["width"], info["height"]
     scale_to = (w, h)
     if args.preview:
@@ -112,7 +125,7 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(args.out)) or ".", exist_ok=True)
 
     if len(segs) <= CHUNK:
-        encode(src, build_graph(segs, info, args.punch, center, args.fade_ms / 1000, scale_to),
+        encode(src, build_graph(segs, info, args.punch, center, args.fade_ms / 1000, scale_to, no_punch=no_punch),
                args.out, info, args.crf, args.preview, info.get("has_audio"))
     else:
         # Long edits: video in chunks (small graphs), audio in ONE pass. Concatenating separately encoded
@@ -123,7 +136,7 @@ def main():
             chunk = segs[k:k + CHUNK]
             p = os.path.join(tmpdir, f"part_{k // CHUNK:03d}.mp4")
             graph = build_graph(chunk, info, args.punch, center, args.fade_ms / 1000, scale_to, index_offset=k,
-                                audio=False)
+                                audio=False, no_punch=no_punch)
             encode(src, graph, p, info, args.crf, args.preview, False)
             parts.append(p)
         lst = os.path.join(tmpdir, "list.txt")

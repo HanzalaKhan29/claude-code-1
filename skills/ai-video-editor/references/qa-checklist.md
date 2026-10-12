@@ -2,6 +2,13 @@
 
 Do not tell the user "done" until every line is checked or explicitly reported as not checkable.
 
+**Three rules about the result itself:**
+- `qa.py` exits 1 on any FAIL. A WARN is not a PASS: every WARN gets a written disposition in `EDIT_STATE.md`
+  (fixed / accepted because ... / user asked).
+- Write `qa/qa-look.md`: one line per sheet you opened and what you saw. A sheet you did not open is not checked.
+- Approvals are written, never assumed: the user's words, the date and what they approved go into
+  `EDIT_STATE.md` before the next stage starts. Full list of traps: `mistakes-and-fixes.md`.
+
 ## Before the build (gates)
 - [ ] Storyboard approved by the user (`storyboard.py` passed: contiguous scenes, verbatim VO, 2+ style options)
 - [ ] Visual sources decided (user assets / web with licences / Higgsfield yes-no / prompt pack) and every
@@ -15,18 +22,24 @@ Do not tell the user "done" until every line is checked or explicitly reported a
 - [ ] H.264 (or HEVC/AV1 on request), yuv420p, AAC 48 kHz, faststart, BT.709 tags
 - [ ] Duration matches the EDL (render_cut.py prints both); audio and video stream durations match (ffprobe)
 - [ ] No black frames, no frozen live footage, no flash frames (shots under 3 frames)
-- [ ] `python3 scripts/verify_cut.py <render> work/words_cut.json`: no clipped or ghost words at cut points; no drift over 120 ms
+- [ ] `python3 scripts/verify_cut.py <render> work/words_cut.json`: no clipped or ghost words at cut points; no drift over 250 ms (Whisper word times are only good to about +/-200 ms)
 - [ ] HyperFrames graphics: `npx hyperframes check .` 0 findings for every composition
+- [ ] 9:16: `qa.py <final> --safe <zone>` run; `safezone.py html <comp> --platform <zone>` PASS for every
+      composition; `safezone.py alpha <overlay.mov> --platform <zone>` PASS for every alpha overlay
+- [ ] `probe.py` warnings (VFR, HDR, odd fps, mono) each have a disposition
 
 ## Look (open every sheet yourself)
 - [ ] `qa/cuts.png`: every edit point invisible or intentional; no jump that the punch-in failed to hide
 - [ ] `qa/captions.png`: readable, correct spelling of names, inside the safe box, never over eyes or mouth, one highlight per group
+- [ ] `qa/safezone_<zone>.png`: no text, logo or CTA under the top UI, bottom description or the right rail
 - [ ] `qa/overview.png`: colour consistent shot to shot; nothing broken; rhythm varies
 - [ ] Every graphic frame (`npx hyperframes snapshot`): no clipped text, no overlaps, contrast holds, on-brand, lands on its word
 - [ ] First frame works as a thumbnail (Shorts) and the first 3 s already deliver the hook
 - [ ] Slop audit: at most 2 font families, 1 accent, no emoji icons, no default-banned effects unless chosen
 
 ## Listen (if you cannot hear audio, say so and list the timestamps the user should check)
+You cannot hear. Numbers (LUFS, peak, mono check) prove levels, not taste: write the timestamps of every music
+in/out, SFX and join into `EDIT_STATE.md` under "Listening note" and ask the user to listen to those.
 - [ ] Every join: no click, no clipped consonant, no doubled breath
 - [ ] Music never fights the voice; no vocals under speech; silence before reveals where planned
 - [ ] SFX land on visible events only

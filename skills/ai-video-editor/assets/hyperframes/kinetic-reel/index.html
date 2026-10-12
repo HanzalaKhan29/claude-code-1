@@ -30,9 +30,15 @@
       html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--ink); }
       #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--ink); }
       .ground { position: absolute; inset: 0; background: var(--ink); }
-      /* Centre stage inside the 9:16 safe box (x 120-960, y 288-1248): the lockup is centred at y ~ 760 */
-      .stage { position: absolute; left: 120px; right: 120px; top: 288px; height: 960px;
-               display: flex; flex-direction: column; align-items: center; justify-content: center; }
+      /* SAFE ZONE: the stage is the platform's safe box (scripts/safezone.py). Set data-platform on #root:
+         reels (organic Instagram: 220 top / 420 bottom / 1010 wide), reels-ad, tiktok, shorts, cross (all).
+         Centred and symmetric about x = 540 so the lockup never drifts; stages avoid each button rail. */
+      .stage { position: absolute; display: flex; flex-direction: column; align-items: center;
+               justify-content: center; left: 75px; right: 75px; top: 260px; bottom: 460px; }
+      [data-platform="reels-ad"] .stage { left: 110px; right: 110px; top: 300px; bottom: 700px; }
+      [data-platform="tiktok"] .stage,
+      [data-platform="cross"] .stage { left: 192px; right: 192px; top: 300px; bottom: 1100px; }
+      [data-platform="shorts"] .stage { left: 192px; right: 192px; top: 310px; bottom: 700px; }
       .beat { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; flex-direction: column;
               align-items: center; justify-content: center; opacity: 0; }
       .whisper { font-family: "Instrument Serif", serif; font-style: italic; font-size: 88px; line-height: 1.05;
@@ -54,7 +60,7 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="kinetic-reel" data-start="0" data-duration="8" data-fps="30" data-width="1080" data-height="1920">
+    <div id="root" data-platform="reels" data-composition-id="kinetic-reel" data-start="0" data-duration="8" data-fps="30" data-width="1080" data-height="1920">
       <div id="ground" class="ground"></div>
       <div class="stage">
         <!-- COPY LIST (example). Beat 1: hook on ink -->
@@ -95,6 +101,43 @@
         { id: "b4", ground: "#0E0F0E", words: [5.00, 5.18, 5.34], apex: 5.56 },
       ];
       const DUR = 8, FPS = 30;
+
+      // Shrink-to-fit: real copy is longer than the example. Every whisper line and apex word is shrunk until it
+      // fits the stage width (never clipped, never past the safe box). Runs once, after the exact font faces
+      // load, so the measurement uses the real glyphs (a fallback font would measure wrong).
+      function fitText() {
+        const stage = document.querySelector(".stage");
+        const maxW = stage.clientWidth, maxH = stage.clientHeight;
+        const textW = (el) => { const r = document.createRange(); r.selectNodeContents(el);
+                                return r.getBoundingClientRect().width; };
+        document.querySelectorAll(".whisper, .apex").forEach((el) => {
+          const SLAM = 1.12;  // apex words start at 112% scale: fit the slam, not just the settled word
+          const room = (maxW - (el.querySelector(".ring") ? 140 : 0)) / (el.classList.contains("apex") ? SLAM : 1);
+          let size = parseFloat(getComputedStyle(el).fontSize);
+          const floor = size * 0.3;
+          while (textW(el) > room && size > floor) { size *= 0.96; el.style.fontSize = size + "px"; }
+        });
+        // height: the whole lockup of each beat must fit the stage (font content boxes, not just capitals)
+        // (measure the stacked children's real extent: scrollHeight under-reports centred content that
+        //  overflows upward, which once shrank an apex word to nothing)
+        const contentH = (beat) => { const kids = [...beat.children]; if (!kids.length) return 0;
+          const top = Math.min(...kids.map((k) => k.getBoundingClientRect().top));
+          const bottom = Math.max(...kids.map((k) => k.getBoundingClientRect().bottom));
+          return bottom - top; };
+        document.querySelectorAll(".beat").forEach((beat) => {
+          const apex = beat.querySelector(".apex");
+          if (!apex) return;
+          const start = parseFloat(getComputedStyle(apex).fontSize);
+          let guard = 40;
+          while (contentH(beat) * 1.06 > maxH && guard-- > 0 &&
+                 parseFloat(getComputedStyle(apex).fontSize) > start * 0.4) {
+            apex.style.fontSize = parseFloat(getComputedStyle(apex).fontSize) * 0.95 + "px";
+          }
+        });
+      }
+
+      function build() {
+      fitText();
       const tl = gsap.timeline({ paused: true });
 
       BEATS.forEach((b, i) => {
@@ -131,7 +174,16 @@
         set(v) { const n = Math.floor(v); if (n !== _s) { _s = n;
           grainEl.style.backgroundPosition = ((n * 137) % 256) + "px " + ((n * 89) % 256) + "px"; } } });
       tl.fromTo(grain, { s: 0 }, { s: DUR * 12, duration: DUR, ease: "none" }, 0);
-      window.__timelines["kinetic-reel"] = tl;
+      window.__timelines["kinetic-reel"] = tl;  // register LAST (an early or empty registration renders blank)
+      }
+
+      // Load the exact faces before measuring (FOUT guard), then build. Fonts that fail still build (with a
+      // console error) rather than hanging the render.
+      Promise.all([
+        document.fonts.load('400 330px "Anton"'),
+        document.fonts.load('italic 400 88px "Instrument Serif"'),
+        document.fonts.load('700 30px "JetBrains Mono"'),
+      ]).then(build, (e) => { console.error("font load failed", e); build(); });
     </script>
   </body>
 </html>

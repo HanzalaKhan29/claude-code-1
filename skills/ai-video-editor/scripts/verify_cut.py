@@ -30,12 +30,22 @@ def main():
     ap.add_argument("render")
     ap.add_argument("planned")
     ap.add_argument("--render-words")
-    ap.add_argument("--model", default="small")
+    ap.add_argument("--model", default=None, help="default: the model recorded in transcribe-meta.json next to "
+                    "the planned words (same model both passes, or model disagreement looks like cut errors)")
     ap.add_argument("--language", default="auto")
-    ap.add_argument("--drift-ms", type=float, default=120, help="flag words whose timing moved more than this")
+    ap.add_argument("--drift-ms", type=float, default=250,
+                    help="flag words whose timing moved more than this (Whisper's own word timing jitters ~200 ms)")
     args = ap.parse_args()
 
     planned = read_json(args.planned)
+    if args.model is None:
+        meta_dir = os.path.dirname(os.path.abspath(args.planned))
+        for cand in (meta_dir, os.path.dirname(meta_dir)):
+            mp = os.path.join(cand, "transcribe-meta.json")
+            if os.path.exists(mp):
+                args.model = read_json(mp).get("model")
+                break
+        args.model = args.model or "large-v3-turbo"
     if args.render_words:
         heard = read_json(args.render_words)
     else:
@@ -80,7 +90,9 @@ def main():
         print(f"  worst drift: '{worst['word']}' {worst['drift_ms']} ms (planned {worst['planned']}s)")
     print("ASR is imperfect: listen at each flagged time before re-cutting. Real clipped words usually show as "
           "'changed' or 'missing' right next to a cut point.")
-    sys.exit(1 if (problems and match < 0.97) or len(drifts) > 3 else 0)
+    print("Note: this pass re-runs the same kind of speech model, so it cannot catch words both passes mishear or "
+          "invent. It catches gross render damage (clipped, missing, doubled words). Still listen to every join.")
+    sys.exit(1 if problems or len(drifts) > 3 else 0)
 
 
 if __name__ == "__main__":

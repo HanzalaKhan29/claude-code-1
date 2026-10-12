@@ -74,7 +74,14 @@ def main():
         engines.append(check_py("mlx_whisper", "mlx-whisper", "fastest on Apple Silicon"))
     engines.append(check_py("faster_whisper", "faster-whisper", "fast on CPU/NVIDIA, word timestamps"))
     engines.append(check_py("whisper", "openai-whisper", "reference Whisper, slower"))
-    have_engine = any(e["ok"] for e in engines) or bool(npx)
+    hf_ok = False
+    if npx and not any(e["ok"] for e in engines):  # the fallback only counts if it actually runs
+        try:
+            hf_ok = subprocess.run(["npx", "--yes", "hyperframes", "--version"], capture_output=True,
+                                   timeout=90).returncode == 0
+        except (subprocess.TimeoutExpired, OSError):
+            hf_ok = False
+    have_engine = any(e["ok"] for e in engines) or hf_ok
     # Engines download their model on first use. A sandbox or firewall that blocks Hugging Face makes an
     # "installed" engine fail late, so check reachability now (skip if a model is already cached).
     cache = os.path.expanduser("~/.cache/huggingface/hub")

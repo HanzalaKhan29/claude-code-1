@@ -29,7 +29,7 @@ def face_xs(path, dur, window, step=0.5):
     import cv2  # noqa: WPS433
     cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
     cap = cv2.VideoCapture(path)
-    sections, t = [], 0.0
+    sections, hits, t = [], [], 0.0
     while t < dur:
         xs = []
         s = t
@@ -44,10 +44,16 @@ def face_xs(path, dur, window, step=0.5):
                     xs.append((fx + fw / 2) / small.shape[1])
             s += step
         sections.append((t, statistics.median(xs) if xs else None))
+        hits.append(len(xs) / max(1, int(window / step)))
         t += window
     cap.release()
-    # fill gaps with the previous known position (or centre)
-    last = 0.5
+    weak = [round(sections[i][0], 1) for i, h in enumerate(hits) if h < 0.5]
+    if weak:
+        print(f"WARN face found in under half the samples of sections starting at {weak[:10]} s (profile, tilt, "
+              "occlusion or a small face): check those crops, or pass --x for a fixed centre.")
+    # fill gaps: before the first detection use the first known position (not the centre), then carry forward
+    known = [x for _, x in sections if x is not None]
+    last = known[0] if known else 0.5
     out = []
     for t0, x in sections:
         last = x if x is not None else last

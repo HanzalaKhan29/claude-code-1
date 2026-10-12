@@ -11,7 +11,13 @@ Built from: Luv Sankhla's AI Video Editor skill, the WeAreNoCode YouTube-editor 
 
 ## The one rule that matters most
 
-Never say an edit is done until you have rendered it and looked at it yourself: the frames at every cut, every caption, every graphic, plus the QA report. Scripts and code that "should work" are not a video. If you could not check something (for example you cannot hear audio), say exactly what you could not check.
+Never say an edit is done until you have rendered it and looked at it yourself: the frames at every cut, every caption, every graphic, plus the QA report. Scripts and code that "should work" are not a video. Three things make that rule real instead of a promise:
+
+- **Leave a trace.** After `qa.py`, write `qa/qa-look.md`: one verdict line per sheet you opened (what you checked, what you fixed). No qa-look.md, not done.
+- **"Could not check" needs an attempt.** Write it as "tried <command>, failed: <exact error>". Anything never rendered carries the banner UNRENDERED, NOT VERIFIED and is never called done.
+- **WARN is not PASS.** Every WARN line from any script gets a written disposition in `EDIT_STATE.md` (fixed, or accepted with the reason).
+
+The mistakes this skill has already made, and the guard for each: `references/mistakes-and-fixes.md`. Read it once per project, and the section for each stage before you start it.
 
 ## 0. Know where you are running
 
@@ -52,6 +58,7 @@ Ask one question at a time and wait (use the AskUserQuestion tool when available
 7. **Never-list:** colours, music type, transitions, words, effects they never want.
 8. **Visuals:** "Do you have the visuals/PNGs, or should I source them?" and, once per project, "Use Higgsfield to generate visuals for this one?" (see section 5).
 9. **Music and SFX:** "Epidemic Sound (your plan) or free copyright-safe sources?" Never assume either.
+10. **Where will it be posted?** Instagram only, or also TikTok / YouTube Shorts? This picks the 9:16 safe zone every caption and graphic must respect: `reels` (Instagram only), `cross` (several platforms), or one platform's own zone.
 
 Write the answers to `EDIT_STATE.md` as the brief.
 
@@ -82,7 +89,7 @@ python3 scripts/plan_cuts.py source/raw.mp4 work/words.json --out work --style n
 - Read `probe.json` warnings and act on them (sparse keyframes, HDR, variable frame rate, low resolution limits punch-ins).
 - Fix misspelled names in `work/words.json` (keep timings). Whisper invents words over silence: distrust any text in a gap.
 - `--style tight` for Shorts and hype, `natural` for YouTube talking heads, `loose` for documentary and emotional pieces.
-- `plan_cuts.py` drops fillers, abandoned retakes (keeps the last take), and dead air, snaps every cut into silence so no word is clipped, and writes `cutlist.md`. **Show `cutlist.md` to the user and get a yes** before rendering. Soft fillers (like, so, you know, matlab) are flagged, not cut: decide with the user.
+- `plan_cuts.py` drops fillers, abandoned retakes (keeps the last take), and dead air, snaps every cut into silence so no word is clipped, and writes `cutlist.md`. **Show `cutlist.md` to the user and get a yes** before rendering, and write "cutlist approved <date>" in `EDIT_STATE.md` first. Read its "Review these" and "Checks" lines: retakes it was unsure about, words that may be Whisper inventions, and how many cuts landed in silence. Soft fillers (like, so, you know, matlab) are flagged, not cut: decide with the user.
 - Then render a quick preview and the real cut:
 
 ```bash
@@ -167,30 +174,35 @@ Full captions (styles 1-10) for talking-head Shorts; **selective captions for mo
 
 `--highlight key|active|both|none` sets what gets coloured (the user's request wins over the style default). If the script prints `WARN fonts missing`, fetch them first: a missing font is silently substituted and the captions look subtly wrong.
 
-Rules for every style (reasons in `references/captions.md`): body captions about 4 to 5% of frame height; key word chosen by **meaning**, never at random, at most one per caption group; captions never cover the face; 9:16 captions stay inside the cross-platform safe box (y 288 to 1248 of 1920; the script defaults to y = 0.60); each caption on screen at least 0.5 s; break groups on breaths and sentence ends. Also export the `.srt` for YouTube upload (accessibility and search). For designed, behind-the-subject cinematic captions use HyperFrames `/embedded-captions` (see `references/captions.md`).
+Rules for every style (reasons in `references/captions.md`): body captions about 4 to 5% of frame height; key word chosen by **meaning**, never at random, at most one per caption group; captions never cover the face; 9:16 captions stay inside the platform's safe zone (pass `--platform reels|tiktok|shorts|cross`; the script sizes lines to fit and WARNs on anything outside); `--hook-until <s>` keeps captions off the screen while a hook title is up; each caption on screen at least 0.5 s; break groups on breaths and sentence ends. Also export the `.srt` for YouTube upload (accessibility and search). For designed, behind-the-subject cinematic captions use HyperFrames `/embedded-captions` (see `references/captions.md`).
 
 The italic-serif styles (2, 4, 5) are a deliberate editorial trend. Italics read as "tilted" in motion, so keep them to single key words held at least 0.6 s.
 
 ## 7. Sound, finish and QA
 
+Pipeline order (each step works on the previous step's output; never skip back):
+1. rough cut (`render_cut.py`) 2. colour (`grade.py`) 3. graphics (`overlay.py`, or the composition) 4. captions (`captions.py --burn`) 5. sound and encode (`finish.py`) 6. QA (`qa.py`, `safezone.py`, `qa/qa-look.md`).
+
 ```bash
-python3 scripts/finish.py renders/v3_captions.mp4 renders/v4_final.mp4 --platform youtube \
-        --music work/music/bed.mp3 --music-db -22 --duck [--sfx work/sfx.json] [--denoise]
-python3 scripts/qa.py renders/v4_final.mp4 --edl work/edl.json --captions work/captions_viral.ass --platform youtube
+python3 scripts/finish.py renders/v3_captions.mp4 renders/v4_final.mp4 --platform reels \
+        --music work/music/bed.mp3 --duck [--voice-chain full] [--sfx work/sfx.json] [--denoise]
+python3 scripts/qa.py renders/v4_final.mp4 --edl work/edl.json --captions work/captions_viral.ass --platform reels
 ```
 
 - **Colour first, if the footage needs it** (`references/color-grading.md`): match B-roll/AI shots to the A-roll (`grade.py --match`), preview a look (`grade.py in.mp4 --look warm --still 4`), apply it or a `.cube` LUT, grain 1-5% for the motion-reel register. Grade before captions.
 - **Sound source:** the user chose Epidemic Sound or free sources at intake; note every file's source and licence in `EDIT_STATE.md` (`references/sound-design.md`).
 - Sound effects only where something visibly changes. Risers use `"end_at"` in `sfx.json` so they peak on the hit frame; repeated SFX are auto-varied a few percent; text pops sit 8-14 dB under impacts. Explainers: at most about one SFX per second, none on top of key words.
+- The bed is placed 20 LU under the **measured voice** (`--music-sep`), the duck follows the voice level, and SFX `db` values are relative to the voice peak, so a quiet narrator never ends up under the music. `--voice-chain full` adds a compressor and de-esser for uneven or harsh recordings.
 - Music bed 16-25 dB under the voice, ducked with 600 ms - 1 s recovery (`--duck`, default 700 ms), no vocals under speech, a change of track or energy every 60-90 s. Stop it dead before a reveal with `--music-stop <t>` (rings out as a short reverb tail; `--music-tail cut` for a hard stop).
 - **Closed Eye Test** before calling the sound done: if the cut is not engaging with eyes closed, fix voice, rhythm and gaps before any visual polish.
 - Deliver -14 LUFS integrated, -1 dBTP max (YouTube, Shorts, Reels, TikTok). `finish.py` does two-pass loudness normalisation and the platform encode (H.264 high, yuv420p, BT.709 tags, AAC 48 kHz, faststart).
-- `qa.py` must show no FAIL. Then **look** at `qa/cuts.png`, `qa/captions.png`, `qa/overview.png`. Fix and re-run until clean.
+- `qa.py` must show no FAIL (it exits 1), and every WARN needs a written disposition. Then **look** at `qa/cuts.png`, `qa/captions.png`, `qa/overview.png` and, for 9:16, `qa/safezone_<platform>.png`, and write `qa/qa-look.md`.
+- **Safe zone, always, for 9:16** (the user's standing rule): every word, logo and graphic sits inside the platform's box and off the button rail. Instagram Reels: 220 px top, 420 px bottom, 1010 px wide, like/comment rail in the bottom-right corner. HyperFrames graphics: `python3 scripts/safezone.py html work/gfx/<dir> --platform reels` (exact, every visible text box, 10 samples per second). Transparent overlays: `safezone.py alpha <file.mov>`. Reference: `assets/safe-zones/`.
 - Platform specs, safe zones, thumbnails and chapters: `references/platforms-and-styles.md`.
 
 ## 8. Review rounds and learning
 
-Show the user each stage before the next: rough cut, visuals plan, graphics, captions, final. Keep every version (`v1`, `v2`, ...) so they can compare. Never overwrite source footage.
+Show the user each stage before the next: rough cut, visuals plan, graphics, captions, final. If the user is away: cutlist, storyboard and final delivery are hard holds (wait); graphics and caption iterations may continue with the assumption written in `EDIT_STATE.md`. Keep every version (`v1`, `v2`, ...) so they can compare. Never overwrite source footage.
 
 When they give notes ("at 0:22 do X", "too busy", "that flash at 0:14 is a mistake"), fix exactly those, re-render, re-run QA. After each round ask: **"Should I add what we learned to the skill?"** On yes, append the rule, with its reason and the example, to `assets/learned-rules.md` (or the user's own copy of this skill). Read that file at the start of every project: it is how this editor becomes theirs.
 
@@ -229,9 +241,11 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | `references/motion-prompt-research.md` | deep dive: what 513 Opus 5.5 video prompts reveal, best full prompts |
 | `references/tooling-research.md` | verified ffmpeg recipes, transcription engines (incl. Hindi), auto-editor, other public video skills, asset licences |
 | `references/qa-checklist.md` | the pre-delivery checklist |
+| `references/mistakes-and-fixes.md` | every mistake class found in an audit of this skill, by stage, with the automatic guard or the exact manual check |
 | `assets/style-card-template.md`, `assets/edit-state-template.md`, `assets/learned-rules.md` | style card to fill; project state file; rules learned from the user's notes |
 | `assets/storyboard-template.json`, `assets/style-lab.md` | the 7-field storyboard to fill; the persistent Keep/Maybe/Drop motion and sound vocabulary |
-| `assets/hyperframes/` | tested starters: kinetic-reel (9:16 genre reel), lower-third, stat-counter |
+| `assets/hyperframes/` | tested starters: kinetic-reel (9:16 genre reel, `data-platform` safe-zone stage, auto-fit text), lower-third, stat-counter |
+| `assets/safe-zones/` | the user's Reels safe-zone reference image and transparent guide PNGs per platform |
 
 ## Scripts (all standard-library Python + ffmpeg; run with `--help` for options)
 
@@ -254,4 +268,5 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | `fetch_fonts.py` | downloads Google Fonts TTFs for captions and graphics |
 | `captions.py` | 12 caption styles (incl. kinetic two-tier and feed) as word-timed ASS + SRT, `--selective`, burn-in |
 | `finish.py` | voice clean-up, music bed with ducking, music stop + reverb tail, varied SFX, risers that end on the hit, two-pass -14 LUFS, platform encode |
-| `qa.py` | spec/loudness/black/freeze/flash checks, cut and caption review sheets |
+| `qa.py` | spec/loudness/black/freeze/flash/mono checks, cut, caption and safe-zone review sheets; exits 1 on FAIL |
+| `safezone.py` | 9:16 safe zones: exact text-box audit of HyperFrames compositions, alpha audit of overlays, overlay sheets, design guides |

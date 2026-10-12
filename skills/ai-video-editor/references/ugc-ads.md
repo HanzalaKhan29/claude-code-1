@@ -37,6 +37,15 @@ disclosed. Practitioner numbers are labelled [PRACTITIONER]; nothing here is pla
 
 ## Disclosure (verified 2026-10-11 against primary sources)
 
+**When in doubt, disclose.** A visible "AI-generated" or "synthetic presenter" label costs almost nothing in
+performance and removes the legal risk in every market below. Default to disclosing any AI person or voice in
+a paid ad; drop it only when the user confirms with counsel that it is not needed.
+
+**C2PA survives only on the master.** `finish.py` and every ffmpeg re-encode strip C2PA / Content Credentials
+metadata. Keep the AI tool's original export (with its provenance) in `source/` or `renders/masters/`, and
+tell the user the delivered MP4 no longer carries it, so platform "AI info" labels will not trigger
+automatically: they must set the platform's AI toggle by hand.
+
 - **New York, GBL section 396-b** (S.8420-A / A.8887-B, signed 11 Dec 2025, **in force since 9 June 2026**):
   an advertiser who knowingly uses a "synthetic performer" (an AI or algorithm-made person not recognisable as
   any real performer) in an ad must disclose it conspicuously. Civil penalty $1,000 for a first violation,

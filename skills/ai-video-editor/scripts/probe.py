@@ -10,7 +10,7 @@ import sys
 
 sys.dont_write_bytecode = True  # keep the installed skill folder clean
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _common import contact_sheet, loudness, need, probe, run, silences, write_json  # noqa: E402
+from _common import contact_sheet, loudness, need, probe, run, silences, vfr_check, write_json  # noqa: E402
 
 
 def keyframe_gap(path, seconds=30):
@@ -72,8 +72,14 @@ def main():
         if info.get("rotation"):
             warnings.append(f"Phone rotation metadata {info['rotation']} deg: ffmpeg auto-rotates, HyperFrames may not. "
                             "Re-encode once to bake rotation in.")
-        if abs(info["fps"] - round(info["fps"])) > 0.01 and info["fps"] not in (23.976, 29.97, 59.94):
-            warnings.append(f"Unusual/variable frame rate {info['fps']}: re-encode to constant fps first.")
+        info["vfr"] = bool(vfr_check(args.video) or abs(info["fps"] - info.get("r_fps", info["fps"])) > 0.05
+                           or (abs(info["fps"] - round(info["fps"])) > 0.01
+                               and info["fps"] not in (23.976, 29.97, 59.94)))
+        if info["vfr"]:
+            f = round(info.get("r_fps") or info["fps"]) or 30
+            warnings.append(f"ERROR variable frame rate (phone footage): cuts, captions and audio will drift. "
+                            f"Re-encode to constant fps BEFORE editing (plan_cuts.py refuses VFR): ffmpeg -i in "
+                            f"-vf fps={f} -c:v libx264 -crf 16 -c:a aac -b:a 192k cfr.mp4")
         info["contact_sheet"] = contact_sheet(args.video, os.path.join(out, "contact.png"), every=args.every)
     info["warnings"] = warnings
     write_json(info, os.path.join(out, "probe.json"))

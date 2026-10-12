@@ -19,6 +19,8 @@ The user has a paid **Epidemic Sound** plan. Every project, ask which source to 
 
 - **Epidemic Sound**: the user downloads the tracks/SFX (or gives the files); keep the licence crediting the
   plan requires, and note track IDs in `EDIT_STATE.md`. Channel/whitelisting is the user's account setting.
+  The licence covers videos published **while the subscription is active**: if the plan lapses, earlier
+  videos stay cleared, new uploads do not. Confirm it is active on the publish date.
 - **Free, copyright-safe**: YouTube Audio Library (check each track's attribution requirement), Pixabay Music
   and SFX, Mixkit, Freesound (CC0 or CC-BY only; CC-BY needs credit). Write the source URL and licence of
   every file into `EDIT_STATE.md`.
@@ -32,7 +34,13 @@ The user has a paid **Epidemic Sound** plan. Every project, ask which source to 
 - Delivery loudness: -14 LUFS integrated, -1 dBTP (`finish.py`). Mastering hotter buys nothing.
 - **Music bed under voice: 16-25 dB below the voice.** Auto-duckers (Premiere, CapCut) pin at about -16 to
   -20 dB of bed depth; the extra 3-5 dB of sidechain gain reduction is the icing applied after that, not the
-  cake. `finish.py --music-db -20 --duck` does both stages. [PRACTITIONER]
+  cake. `finish.py --music-sep 20 --duck` does both stages. [PRACTITIONER]
+- **The bed level is relative to the measured voice**, not an absolute number: `--music-sep 20` measures the
+  voice LUFS and the music LUFS and sets the bed 20 LU under the voice, so a quiet track and a slammed track
+  land at the same place. `--music-db` is the old absolute gain, kept only as an override.
+- **Voice chain:** `--voice-chain light` (high-pass 80 Hz only, default) or `full` (high-pass, 3:1 compressor,
+  then de-esser) for uneven mic distance or harsh S sounds. A mono voice is upmixed to stereo first; music is
+  forced to stereo, so the master never collapses to mono.
 - **Duck recovery 600 ms - 1 s** (`--duck-release`, default 700). Faster pumps audibly; slower buries the
   start of the next phrase under music. [PRACTITIONER]
 - **Dynamic EQ instead of (or under) broadband ducking:** dip only the music's 2-5 kHz presence band while the
@@ -49,7 +57,9 @@ The user has a paid **Epidemic Sound** plan. Every project, ask which source to 
 - **SFX only where something visibly changes** (a cut, a graphic landing, a number stopping). Explainers: at
   most about one per second, none on top of a key word.
 - **Riser ends AT the hit.** The riser's peak lands on the impact frame; early or late reads as a mistake. In
-  `sfx.json` use `"end_at": <hit time>` instead of `"at"` and `finish.py` places it so it ends on the frame.
+  `sfx.json` use `"end_at": <hit time>` (or `"peak_at"`) instead of `"at"`: `finish.py` finds the SFX's
+  loudest sample and lands THAT on the frame, not the file's edge. SFX `"db"` is relative to the voice peak
+  (-6 = 6 dB under the voice peak); an SFX that would start before 0 or run past the end is skipped with a WARN.
 - **Whoosh sits under the impact, as its own layer.** Riser builds anticipation, whoosh sells motion, impact
   sells weight: three jobs, three layers. A good whoosh itself has 3-4 frequency layers (sub sweep, mid noise
   band, high air, optional tonal element), each with its own EQ band, which is why it survives phone speakers.

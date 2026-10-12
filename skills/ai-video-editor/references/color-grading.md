@@ -38,6 +38,12 @@ python3 scripts/grade.py --look film --export-lut work/looks/film.cube     # shi
   33-point LUT that Resolve, Premiere, CapCut and ffmpeg all read. Verified: LUT output matches the direct
   chain within 1/255.
 - Always make the `--still` before/after first and look at skin, blacks and the brightest highlight.
+- **LUT-only runs default to 75% strength** (`--lut x.cube` without `--strength`): a creative LUT at 100% is
+  almost always too much on real footage. `--look` and `--lut` together are refused (pick one: they stack).
+- **HDR / HLG / PQ sources** (iPhone default) are refused unless you pass `--tonemap`, which converts to
+  BT.709 SDR (zscale + hable) before grading. Grading HDR as if it were SDR gives washed-out or neon results.
+- **Never grade a graded file.** Grade from the cut of the source, once. A filename containing `graded` or
+  `captions` makes the script WARN: captions must never be graded, and a second grade compounds the first.
 
 ## 3. Verified ffmpeg facts (and traps)
 
@@ -79,5 +85,6 @@ python3 scripts/grade.py --look film --export-lut work/looks/film.cube     # shi
 ## 6. What ffmpeg cannot do (say so instead of faking it)
 
 Tracked face relighting, AI subject masks (sky replacement, background-only grading), per-object keying,
-power windows that follow motion, and true HDR grading. For those, recommend DaVinci Resolve (free) and
+power windows that follow motion, true HDR grading, and **mixed lighting** (a face lit by a window on one side
+and a tungsten lamp on the other cannot be fixed by one global white balance). For those, recommend DaVinci Resolve (free) and
 deliver a LUT plus notes; do not promise a filter chain.

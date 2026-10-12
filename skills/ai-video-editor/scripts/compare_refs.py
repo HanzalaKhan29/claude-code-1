@@ -29,7 +29,7 @@ METRICS = [  # (key or callable, label, unit)
     ("lufs", "Integrated loudness", "LUFS"),
     ("lra", "Loudness range", "LU"),
     ("pauses_per_min", "Pauses >0.4 s per minute", "/min"),
-    ("face_share", "Face on screen", ""),
+    ("face_share", "Face on screen", "%"),
 ]
 
 
@@ -56,7 +56,7 @@ def flatten(m):
         "lufs": (m.get("loudness") or {}).get("integrated_lufs"),
         "lra": (m.get("loudness") or {}).get("lra_lu"),
         "pauses_per_min": round(len(m.get("silences_over_0_4s") or []) / (dur / 60), 1) if dur else None,
-        "face_share": face.get("share") if isinstance(face, dict) else None,
+        "face_share": face.get("face_on_screen_pct") if isinstance(face, dict) else None,
     }
 
 

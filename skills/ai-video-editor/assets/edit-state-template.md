@@ -12,8 +12,21 @@ Updated: <date> · Stage: intake | style | rough cut | storyboard | visuals | ca
 - Never-list:
 - Visuals: user has assets? (yes/no, where) · source the rest? · Higgsfield for this project? (yes/no)
 - Music/SFX source: Epidemic Sound | free sources
+- Posted where (sets the safe zone): reels | reels-ad | tiktok | shorts | cross
 
 ## Approvals (date + what was approved)
+<!-- one line each: YYYY-MM-DD | stage | "user's exact words" | file/version approved -->
+- 
+
+## Probe warnings and dispositions
+<!-- VFR / HDR / mono / odd fps from probe.py: what was done about each -->
+- 
+
+## QA WARN dispositions
+<!-- every WARN from qa.py, captions.py, grade.py, finish.py: fixed | accepted because ... | user asked -->
+- 
+
+## Listening note (timestamps the user must hear)
 - 
 
 ## Decisions

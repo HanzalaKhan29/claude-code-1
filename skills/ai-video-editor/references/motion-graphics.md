@@ -70,6 +70,12 @@ Minimal standalone `index.html`:
 ```
 
 Rules that `lint` enforces or that fail silently:
+- **`fromTo` only**, never `from` or `to` alone on anything the renderer may seek into: `from` records its end state at creation time and breaks on a backwards seek.
+- **One flat timeline.** No nested timelines started by callbacks, no `tl.call()` that starts other tweens, no `onComplete` chains. Everything sits on the one paused timeline at an absolute position.
+- **Register the timeline LAST**, after fonts are loaded and the layout is final: `Promise.all([document.fonts.load("900 120px Anton"), ...]).then(build, () => build())`, where `build()` measures text, then creates the timeline, then sets `window.__timelines[id]`. Registering earlier renders the first frames with fallback metrics, and fit-to-width math is wrong.
+- **Finite repeats only.** `repeat: Math.floor(duration / cycle) - 1`, never `repeat: -1` (an infinite tween makes the timeline length infinite and some renders hang or cut).
+- **No background on `html` or `body`.** Put the background on the root element (or leave it transparent for overlays); a body background is either dropped or it kills alpha.
+- **Media `src` on the element itself**, never on a `<source>` child and never set later by JS.
 - Exactly one paused GSAP timeline per composition, registered at `window.__timelines["<composition-id>"]`. Render length is the root `data-duration`, not the timeline length.
 - Never pair a CSS `transform` with a GSAP tween on the same element and property: use `gsap.fromTo`. Centre with flex/inset, not `translate(-50%,-50%)` on something GSAP moves.
 - Never tween `display`, `visibility` or `autoAlpha` on a `.clip`: animate a child. The runtime owns clip visibility.
@@ -222,6 +228,11 @@ Pacing: explainer scenes 3-6 s; narrated pieces change something about every 1.5
 4. After rendering, check decoded frames from the MP4, not browser screenshots. Look for single-frame pops (a frame differing about 3x more than its neighbours).
 5. Judge each graphic once against brand consistency, interest and relevance; redo only the clearly bad ones. No endless redo loops (cap at 3 passes).
 6. Fast motion with no motion blur strobes: for moves over about 2-3% of frame width per frame, render 4-8 subframes and average them, or keep the move slower.
+7. **Safe zone (9:16):** `python3 scripts/safezone.py html <composition dir> --platform <zone>` must print PASS. It samples 10 times per second, so a 0.2 s slam overshoot is caught. Text that is meant to bleed (giant background word) gets `data-safe-ignore`.
+8. **Read the render log**, not just the exit code: font fallback, missing asset and "timeline not found" messages appear there while the render still "succeeds".
+9. **At least 3 distinct frames.** Extract frames at 25%, 50% and 75% of the render; if they are identical, the timeline never ran (registered late, wrong id, or a JS error) and the MP4 is a still.
+10. **Determinism:** render twice and diff a few frames (`ffmpeg -i a.mp4 -i b.mp4 -lavfi psnr -f null -`); any difference means wall-clock time, randomness or a race crept in.
+11. **Snapshots go stale.** After editing the HTML, re-run `snapshot` before judging; an old PNG in the folder proves nothing.
 
 ## 13. Conflicts between sources, resolved
 

@@ -43,6 +43,8 @@ def validate(sb, words, duration):
     if len(sb.get("options") or []) < 2:
         errs.append("give at least two style options (Option A / Option B) so the user chooses a direction")
     spoken = norm(" ".join(w["text"] for w in words)) if words else None
+    def window_text(a, b):  # the words actually spoken inside this scene's time range (+/- 0.6 s)
+        return norm(" ".join(w["text"] for w in words if w["end"] > a - 0.6 and w["start"] < b + 0.6))
     prev_end = 0.0
     for i, s in enumerate(scenes, 1):
         tag = f"scene {i}"
@@ -60,6 +62,9 @@ def validate(sb, words, duration):
         vo = str(s.get("vo", "")).strip()
         if vo and spoken is not None and norm(vo) not in spoken:
             errs.append(f"{tag}: VO line is not verbatim from the transcript: \"{vo}\"")
+        elif vo and spoken is not None and norm(vo) not in window_text(a, b):
+            errs.append(f"{tag}: VO line is verbatim but not spoken inside {a:.2f}-{b:.2f}s (moved or stitched "
+                        f"from elsewhere): \"{vo}\"")
         if s.get("image") and not os.path.exists(s["image"]):
             errs.append(f"{tag}: image not found: {s['image']}")
     if duration and scenes and abs(prev_end - duration) > 0.3:
@@ -107,8 +112,12 @@ def main():
     ap.add_argument("--out", required=True, help="output path without extension")
     ap.add_argument("--words", help="words_cut.json, to check every VO line is verbatim")
     ap.add_argument("--duration", type=float)
+    ap.add_argument("--no-words-check", action="store_true", help="only for a storyboard written before any VO exists")
     args = ap.parse_args()
     sb = read_json(args.storyboard)
+    if not args.words and not args.no_words_check:
+        die("pass --words work/words_cut.json (the verbatim-VO check needs it), or --no-words-check for a "
+            "storyboard with no voiceover yet")
     words = read_json(args.words) if args.words else None
     duration = args.duration or (words[-1]["end"] if words else None)
     errs = validate(sb, words, duration)

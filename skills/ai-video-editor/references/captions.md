@@ -46,14 +46,19 @@ ASS limits to know: the pill box has square corners (libass cannot round them); 
 
 ## 4. Sizing and placement
 
-- "Size" here always means the font size (the em, what `size_pct` and ASS `Fontsize` set), not the cap height. Capitals are about 0.7 em tall, so a 92 px caption has roughly 65 px capitals. When matching a reference, calibrate by the measured width of a line of text, not by eye on letter height.
+- "Size" here always means the font size (the em, what `size_pct` and ASS `Fontsize` set), not the cap height. Capitals are about 0.7 em tall in most grotesques (a 92 px caption has roughly 65 px capitals), but condensed display faces differ: Anton capitals are about 0.5 em. When matching a reference, calibrate by the measured width of a line of text, not by eye on letter height.
 - The fonts must actually load. libass substitutes a system font silently when a family or weight is missing, and the result looks almost right but wider or narrower. `captions.py` prints a WARN when the style's font files are missing from `--fonts`; fetch them with `fetch_fonts.py`. Weights other than 400/700 are requested by legacy names ("Montserrat Black"), which the script handles.
 - Body captions: font size about 4.5-5% of frame height (48-55 px at 1080p landscape; 86-96 px at 1080x1920). Hook/punch size: 6-9%. Never below 2.6% (28 px at 1080) for anything that must be read.
 - 16:9: centred low (script default y = 0.86), but keep the bottom ~12% free of critical text on YouTube (progress bar, auto-captions).
+- **Pass `--platform` on every vertical caption run** (`reels`, `reels-ad`, `tiktok`, `shorts`, `cross`; default `cross`). It sets the line width from that platform's safe box and rail, and the script WARNs when a group overflows it. `cross` is narrow (about 480 px at caption height, because of the TikTok rail), so captions split into more, shorter groups; for an Instagram-only reel use `--platform reels` (box 35-1045 x 220-1500, rail x > 950 below y 1340, the user's reference in `assets/safe-zones/`). Full table: `platforms-and-styles.md` PART B.
+- `--hook-until S` hides captions for the first S seconds while a hook title or graphic is on screen, so the two never stack.
 - 9:16: centred around y = 0.60 (1150 px of 1920). Cross-platform safe box for anything that must be read: x 120-888, y 288-1248. Below 1248 the TikTok/Reels/Shorts description and buttons cover it; the right rail (x > 780 from y 840 down) holds like/comment/share. Platforms publish no official organic pixel specs, so these are measured values that change: re-check templates for ads.
 - Faces: captions never cover the eyes or mouth. Speaker's eyes around 30-40% from the top in 9:16 so captions sit below the chin. If a frame shows overlap, move the captions (`--y`) for that video rather than shrinking them.
 - Hook text (first 1-3 s of a Short): upper middle, y about 300-600. Never two text blocks competing: while a hook title or a graphic with words is on screen, either hide the captions for those seconds or keep the two clearly separated (title top, captions low), never stacked at the same height.
 - Face fills the frame (tight vertical close-up): there is no room below the chin, so put captions in the upper third (y about 0.25-0.30) or on the chest only if the mouth stays clear. Check a frame; the default y is a starting point, not a rule.
+
+- **Double captions.** Burned captions plus the platform's auto-captions show the same words twice. When burning, tell the user to switch platform auto-captions off for that post, or upload the SRT instead of burning (never both).
+- Dashes in the transcript become spaces (never a literal dash glyph mid-caption); common abbreviations (Dr., U.S., e.g.) are protected from sentence splitting.
 
 ## 5. Grouping and timing
 

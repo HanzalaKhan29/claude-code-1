@@ -61,8 +61,12 @@ def probe(path):
         w, h = int(v.get("width", 0)), int(v.get("height", 0))
         if abs(rotation) in (90, 270):
             w, h = h, w
+        try:
+            r_fps = float(Fraction(v.get("r_frame_rate") or rate)) if (v.get("r_frame_rate") or rate) != "0/0" else fps
+        except (ZeroDivisionError, ValueError):
+            r_fps = fps
         info.update({
-            "width": w, "height": h, "fps": round(fps, 3), "fps_fraction": rate,
+            "width": w, "height": h, "fps": round(fps, 3), "fps_fraction": rate, "r_fps": round(r_fps, 3),
             "vcodec": v.get("codec_name"), "pix_fmt": v.get("pix_fmt"),
             "color_transfer": v.get("color_transfer"), "rotation": rotation,
             "aspect": round(w / h, 4) if h else 0,
@@ -74,6 +78,26 @@ def probe(path):
             "channels": a.get("channels"),
         })
     return info
+
+
+def vfr_check(path, seconds=20):
+    """True when frame durations really vary (variable frame rate). avg_frame_rate can read a clean 30/1 on
+    true VFR phone footage, so this measures the actual timestamps of the first `seconds`."""
+    proc = run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-read_intervals", f"%+{seconds}",
+                "-show_entries", "packet=pts_time", "-of", "csv=p=0", path], check=False)
+    pts = []
+    for line in proc.stdout.splitlines():
+        try:
+            pts.append(float(line.strip().strip(",")))
+        except ValueError:
+            pass
+    pts.sort()
+    d = sorted(b - a for a, b in zip(pts, pts[1:]) if b > a)
+    if len(d) < 20:
+        return False
+    med = d[len(d) // 2]
+    lo, hi = d[int(len(d) * 0.05)], d[int(len(d) * 0.95)]
+    return med > 0 and (hi - lo) / med > 0.15
 
 
 def silences(path, noise_db=-35, min_dur=0.35):
@@ -246,3 +270,57 @@ def fmt_tc(t):
     h, rem = divmod(t, 3600)
     m, s = divmod(rem, 60)
     return f"{int(h):02d}:{int(m):02d}:{s:06.3f}"
+
+
+# Safe zones for 9:16 (pixel values on a 1080x1920 canvas; scaled to the real frame by safe_zone()).
+# box = (x0, y0, x1, y1) where anything that must be read lives; rails = rectangles inside the box that
+# platform buttons still cover (keep text out of them). Sources: references/platforms-and-styles.md PART B.
+SAFE_ZONES = {
+    # Organic Instagram Reels, the user's spec (agency template): 220 px top, 420 px bottom, 1010 px wide.
+    # The like/comment/share/more column overlaps the box's bottom-right corner.
+    "reels": {"box": (35, 220, 1045, 1500), "rails": [(950, 1340, 1080, 1920)]},
+    # Instagram Reels ADS (Meta Ads Guide: 14% top, 35% bottom, 6% sides; CTA bar sits low).
+    "reels-ad": {"box": (65, 269, 1015, 1248), "rails": [(950, 1100, 1080, 1920)]},
+    # TikTok in-feed (template measurement): action rail ~300 px wide from y 840.
+    "tiktok": {"box": (120, 240, 960, 1260), "rails": [(780, 840, 1080, 1920)]},
+    # YouTube Shorts (Google Ads Help image reading).
+    "shorts": {"box": (48, 288, 888, 1248), "rails": [(888, 700, 1080, 1920)]},
+    # Intersection of all of the above: the default when a video is cross-posted.
+    "cross": {"box": (120, 288, 888, 1248), "rails": [(780, 840, 1080, 1920)]},
+}
+SAFE_ALIASES = {"instagram": "reels", "ig": "reels", "reel": "reels", "youtube-shorts": "shorts",
+                "all": "cross", "any": "cross"}
+
+
+def safe_zone(platform, W=1080, H=1920):
+    """Safe box + rails for a platform, scaled to a W x H frame. Returns None for non-vertical frames."""
+    if H < W * 1.2:
+        return None
+    key = SAFE_ALIASES.get((platform or "cross").lower(), (platform or "cross").lower())
+    if key not in SAFE_ZONES:
+        die(f"unknown safe-zone platform '{platform}'. Use one of: {', '.join(SAFE_ZONES)}")
+    sx, sy = W / 1080.0, H / 1920.0
+    z = SAFE_ZONES[key]
+    scale = lambda r: (r[0] * sx, r[1] * sy, r[2] * sx, r[3] * sy)  # noqa: E731
+    return {"name": key, "box": scale(z["box"]), "rails": [scale(r) for r in z["rails"]]}
+
+
+def zone_violations(rect, zone):
+    """rect = (x0, y0, x1, y1) of something that must be read. Returns a list of human-readable problems."""
+    if zone is None:
+        return []
+    x0, y0, x1, y1 = rect
+    bx0, by0, bx1, by1 = zone["box"]
+    out = []
+    if x0 < bx0 - 0.5:
+        out.append(f"left edge x={x0:.0f} < safe {bx0:.0f}")
+    if x1 > bx1 + 0.5:
+        out.append(f"right edge x={x1:.0f} > safe {bx1:.0f}")
+    if y0 < by0 - 0.5:
+        out.append(f"top y={y0:.0f} above safe {by0:.0f} (top UI)")
+    if y1 > by1 + 0.5:
+        out.append(f"bottom y={y1:.0f} below safe {by1:.0f} (caption/description UI)")
+    for rx0, ry0, rx1, ry1 in zone["rails"]:
+        if x1 > rx0 and x0 < rx1 and y1 > ry0 and y0 < ry1:
+            out.append(f"overlaps the button rail (x>{rx0:.0f}, y>{ry0:.0f})")
+    return out

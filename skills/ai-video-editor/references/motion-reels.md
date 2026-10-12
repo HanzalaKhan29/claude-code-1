@@ -99,8 +99,20 @@ on both surfaces. A landscape master is a legitimate option, not an error.
 
 Sizing in libass: the font size is not the cap height. Anton capitals are about 50% of the font size, most
 grotesques about 70%. `captions.py` style 11 sets the apex font at 36% of frame height, which lands about
-18% cap height. On 9:16 a long apex word shrinks to fit the safe width; that is physics, not a bug. Keep apex
-words short (one word, ideally 4-7 letters) when the format is vertical.
+18% cap height (36% x 0.5). Do not "correct" this with the 0.7 ratio of other fonts: with Anton that would
+ask for a 26% font and blow the safe width. On 9:16 a long apex word shrinks to fit the safe width; that is
+physics, not a bug. Keep apex words short (one word, ideally 4-7 letters) when the format is vertical.
+
+**Safe zone.** Every apex word, whisper line, annotation label and end-card line must sit inside the
+platform's safe box (`platforms-and-styles.md` PART B; the user's Instagram reference is
+`assets/safe-zones/reels-safe-zone-reference.png`: 220 px top, 420 px bottom, 1010 x 1280 px safe area, the
+like/comment rail bottom-right). The kinetic-reel starter takes `data-platform="reels|reels-ad|tiktok|shorts|cross"`
+on `#root` and its `fitText()` shrinks each word to that stage, reserving room for the 1.12 slam overshoot
+and the annotation ellipse. Prove it with `python3 scripts/safezone.py html <dir> --platform <zone>` (PASS
+required) before rendering.
+
+**Grain once.** Grain the footage (`grade.py --grain`) OR the graphic layer (`grain.png`), never both on the
+same pixels: stacked grain doubles the noise and the encoder smears it into blocks.
 
 ## 4. Kinetic-type toolkit (2025-2026)
 
@@ -192,7 +204,7 @@ words short (one word, ideally 4-7 letters) when the format is vertical.
 
 - **Status pulses are information, not idle wobble.** A heartbeat circle, a rotating dashed gear (linear), or
   staggered network dots that say "this system is running now" are allowed; transform/opacity only, inside a
-  finite timeline. Source: IT Master (C0yro0rgSII) 06:33-08:29.
+  finite timeline: `repeat: Math.floor(sceneDuration / cycle) - 1`, never `repeat: -1`. Source: IT Master (C0yro0rgSII) 06:33-08:29.
 - **Glass is conditional.** Allowed faint, bordered and behind type (never on the type itself); still banned as
   the default chrome of a whole video. The successor treatment is a soft ambient mesh gradient.
 - **Glow** stays banned by default; lightyear's soft glow on Didone caps is a deliberate Look choice, allowed

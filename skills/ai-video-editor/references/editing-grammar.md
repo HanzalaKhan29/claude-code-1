@@ -28,6 +28,9 @@ Distilled from browser-use/video-use, WeAreNoCode, chrislema/videoeditor and has
 - **Eye-trace:** across a cut, keep the subject of interest within about 10-20% of frame width of where the eye already was. Break it only on purpose (a pattern interrupt).
 - **Cut on action:** cut during movement and continue it in the next shot; motion hides the cut [MODERATE, edit-blindness research].
 - **J-cut:** the next clip's audio starts 0.25-1 s before its picture (leads into a new speaker or scene). **L-cut:** the previous audio continues over the new picture (B-roll under the voice). Use on at least half of the scene transitions in interview and documentary edits.
+  Honest limit: `render_cut.py` cuts audio and picture together. Build a J/L cut by laying B-roll or a
+  cutaway over the join with `overlay.py` (the voice carries across, the picture changes early or late); true
+  split edits of the A-roll need an NLE.
 - **Jump cuts in a talking head:** remove pauses over about 300-500 ms and filler; keep 2-6 frames of breath at phrase edges; alternate framing (punch-in) on every 2nd or 3rd cut to hide the jump.
 - **Smash cut:** a sudden loudness change (loud to silence or the reverse) sells it.
 - **Vary shot lengths.** Film shot lengths cluster in mixed runs of short and long (Cutting 2010, [STRONG] for the trend). A metronome rhythm reads as machine-made: cluster fast cuts in high-energy passages, let shots breathe after reveals.

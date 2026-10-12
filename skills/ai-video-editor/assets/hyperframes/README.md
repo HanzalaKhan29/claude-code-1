@@ -13,6 +13,16 @@ Gotchas learned building it: SVG `feTurbulence` grain renders blank in headless 
 an opacity tween is a fade, not a pop (use `tl.set` for visibility, tween only the scale settle); text under
 the grain layer needs `data-layout-allow-occlusion` on each text node or `check` reports text_occluded.
 
+**Safe zone built in.** Set `data-platform` on `#root` to `reels` (the user's organic Instagram spec, default),
+`reels-ad`, `tiktok`, `shorts` or `cross`. That picks the stage box the text lives in. `fitText()` then shrinks
+every word to fit the stage width (reserving the 1.12 slam overshoot and the 140 px ellipse overhang) and
+height, after `document.fonts.load` resolves, and only then registers the timeline. Check it:
+```bash
+python3 scripts/safezone.py html work/gfx/reel --platform reels     # PASS required; samples 10x per second
+python3 scripts/safezone.py guide --platform reels --out work/gfx/guide.png   # overlay for eyeballing snapshots
+```
+Text that should bleed on purpose (a giant background word) gets `data-safe-ignore`.
+
 `stat-counter/index.html` is a transparent stat card with a seek-safe counter and fixed-width digits (example numbers: replace them). Fonts: `fetch_fonts.py "Manrope:500,800" --dir <project>/fonts`. Same workflow as below.
 
 `lower-third/index.html` is a transparent lower-third overlay (1920x1080, 5 s) that follows the HyperFrames
@@ -32,7 +42,8 @@ python3 scripts/overlay.py renders/v1.mp4 work/graphics.json renders/v2_graphics
 
 Edit the CONTENT block (real name and role only) and the BRAND variables (one accent). For 9:16, change
 `data-width`/`data-height` and the viewport to 1080x1920, scale type x1.3, and move the block inside the safe
-box (bottom at least 672 px from the bottom edge).
+box (`safezone.py html . --platform <zone>` must PASS; for `cross` the bottom sits at least 672 px from the
+bottom edge, for organic `reels` at least 420 px).
 
 For anything bigger than a single card, install the official skills (`npx hyperframes skills update`) and use
 `/talking-head-recut`, `/motion-graphics` or `/faceless-explainer`.

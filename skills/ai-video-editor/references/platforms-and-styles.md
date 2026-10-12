@@ -229,12 +229,32 @@ The pixel figures below are those percentages or images converted to pixels by t
 
 | Platform | Top | Bottom | Left | Right | Source |
 |---|---|---|---|---|---|
-| **Instagram Reels** | 14% ≈ **269 px** | 35% ≈ **672 px** | 6% ≈ 65 px | 6% ≈ 65 px | [OFFICIAL %: Meta Ads Guide, https://www.facebook.com/business/ads-guide/update/video/instagram-reels]. Meta's canvas is 1440x2560; percentages scale. |
+| **Instagram Reels (organic, user's spec, skill `reels`)** | **220 px** | **420 px** | 35 px | 35 px, plus the like/comment/share rail bottom-right (x > 950 from y ≈ 1340 down) | The user's measured reference: safe area 1010 x 1280 px. Image: `assets/safe-zones/reels-safe-zone-reference.png`. This is the default for any Instagram-only organic reel. |
+| **Instagram Reels ads (skill `reels-ad`)** | 14% ≈ **269 px** | 35% ≈ **672 px** | 6% ≈ 65 px | 6% ≈ 65 px | [OFFICIAL %: Meta Ads Guide, https://www.facebook.com/business/ads-guide/update/video/instagram-reels]. Meta's canvas is 1440x2560; percentages scale. |
 | **TikTok (In-Feed)** | **240 px** | **660 px** | 120 px | 120 px, plus an action rail about **300 px wide from y≈840 px down** | [3RD-PARTY measurement of TikTok's official template: https://www.upload-post.com/tools/safe-zone-checker/, checked 2026-09-23]. Official templates: https://ads.tiktok.com/help/article/video-ads-specifications |
 | TikTok (alt. measurement) | 254 px | 707 px | 122 px | 242 px rail | [3RD-PARTY: https://adkit.so/tools/safe-zones/tiktok, March 2026] |
 | **YouTube Shorts** | **288 px** | **672 px** | 48 px | **192 px** | [3RD-PARTY reading of Google Ads Help image: https://www.upload-post.com/tools/safe-zone-checker/]. Image source: https://support.google.com/google-ads/answer/9128498?hl=en |
 
 **Caveats.** Margins vary by device aspect (for example 19.5:9 phones crop the sides), by caption length, and by whether an ad CTA is present. Meta asks for 40% bottom clearance on ads with disclaimers [3RD-PARTY citing Meta: https://www.inro.social/tools/instagram-reels-safe-zone-checker]. The platforms' UIs change several times a year.
+
+**The five zones the scripts know** (`--platform` on `captions.py`, `safezone.py`, `qa.py`; `data-platform` on the kinetic-reel starter). Box is x0, y0, x1, y1 on a 1080x1920 frame and scales to other vertical sizes:
+
+| `--platform` | Safe box | Rail no-go | Use when |
+|---|---|---|---|
+| `reels` | 35, 220, 1045, 1500 | x > 950 for y > 1340 | Instagram only, organic. Widest text, biggest captions. |
+| `reels-ad` | 65, 269, 1015, 1248 | x > 950 for y > 1100 | Instagram paid placement (Meta's 14/35/6% plus ad CTA). |
+| `tiktok` | 120, 240, 960, 1260 | x > 780 for y > 840 | TikTok only. |
+| `shorts` | 48, 288, 888, 1248 | x > 888 for y > 700 | YouTube Shorts only. |
+| `cross` (default) | 120, 288, 888, 1248 | x > 780 for y > 840 | One file posted everywhere. |
+
+**Trade-off, say it to the user:** `cross` is the narrowest box. Captions there wrap to about 480 px (the TikTok rail starts at y 840, right where captions sit), so a 60 s talk splits into roughly 40 caption groups instead of about 24 on `reels`. If the video goes to Instagram only, ask for `--platform reels`; posting a `reels` cut to TikTok puts text under the rail.
+
+**How the skill enforces it:**
+- `captions.py --platform X` derives max line width from the zone and prints WARN when a group would cross it.
+- `safezone.py html <composition> --platform X` seeks the HyperFrames timeline 10 times per second and measures every text box with ink-accurate bounds (canvas `measureText`, not the CSS content box). It FAILs with the element, time and edge. `data-safe-ignore` skips decorative text on purpose.
+- `safezone.py alpha <overlay.mov>` checks non-transparent pixels of an overlay against the zone.
+- `safezone.py guide --platform X` writes a transparent guide PNG (copies in `assets/safe-zones/guide_*.png`) to drop over a frame while designing.
+- `qa.py --safe X` writes `qa/safezone_<zone>.png`, a contact sheet of the final with the zone drawn: open it and look.
 
 **Universal cross-platform safe box (the intersection; skill default):**
 - Usable area: **x 120 to 888 (768 px wide), y 288 to 1248 (960 px tall)**.

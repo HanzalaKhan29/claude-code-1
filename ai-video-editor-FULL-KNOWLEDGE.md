@@ -1,4 +1,4 @@
-# AI Video Editor: Full Knowledge Base (v2)
+# AI Video Editor: Full Knowledge Base (v3)
 
 _Merged from SKILL.md + every references/*.md for external review. Templates and scripts excluded: this is the knowledge, not the runtime._
 
@@ -18,7 +18,13 @@ Built from: Luv Sankhla's AI Video Editor skill, the WeAreNoCode YouTube-editor 
 
 ## The one rule that matters most
 
-Never say an edit is done until you have rendered it and looked at it yourself: the frames at every cut, every caption, every graphic, plus the QA report. Scripts and code that "should work" are not a video. If you could not check something (for example you cannot hear audio), say exactly what you could not check.
+Never say an edit is done until you have rendered it and looked at it yourself: the frames at every cut, every caption, every graphic, plus the QA report. Scripts and code that "should work" are not a video. Three things make that rule real instead of a promise:
+
+- **Leave a trace.** After `qa.py`, write `qa/qa-look.md`: one verdict line per sheet you opened (what you checked, what you fixed). No qa-look.md, not done.
+- **"Could not check" needs an attempt.** Write it as "tried <command>, failed: <exact error>". Anything never rendered carries the banner UNRENDERED, NOT VERIFIED and is never called done.
+- **WARN is not PASS.** Every WARN line from any script gets a written disposition in `EDIT_STATE.md` (fixed, or accepted with the reason).
+
+The mistakes this skill has already made, and the guard for each: `references/mistakes-and-fixes.md`. Read it once per project, and the section for each stage before you start it.
 
 ## 0. Know where you are running
 
@@ -59,6 +65,7 @@ Ask one question at a time and wait (use the AskUserQuestion tool when available
 7. **Never-list:** colours, music type, transitions, words, effects they never want.
 8. **Visuals:** "Do you have the visuals/PNGs, or should I source them?" and, once per project, "Use Higgsfield to generate visuals for this one?" (see section 5).
 9. **Music and SFX:** "Epidemic Sound (your plan) or free copyright-safe sources?" Never assume either.
+10. **Where will it be posted?** Instagram only, or also TikTok / YouTube Shorts? This picks the 9:16 safe zone every caption and graphic must respect: `reels` (Instagram only), `cross` (several platforms), or one platform's own zone.
 
 Write the answers to `EDIT_STATE.md` as the brief.
 
@@ -89,7 +96,7 @@ python3 scripts/plan_cuts.py source/raw.mp4 work/words.json --out work --style n
 - Read `probe.json` warnings and act on them (sparse keyframes, HDR, variable frame rate, low resolution limits punch-ins).
 - Fix misspelled names in `work/words.json` (keep timings). Whisper invents words over silence: distrust any text in a gap.
 - `--style tight` for Shorts and hype, `natural` for YouTube talking heads, `loose` for documentary and emotional pieces.
-- `plan_cuts.py` drops fillers, abandoned retakes (keeps the last take), and dead air, snaps every cut into silence so no word is clipped, and writes `cutlist.md`. **Show `cutlist.md` to the user and get a yes** before rendering. Soft fillers (like, so, you know, matlab) are flagged, not cut: decide with the user.
+- `plan_cuts.py` drops fillers, abandoned retakes (keeps the last take), and dead air, snaps every cut into silence so no word is clipped, and writes `cutlist.md`. **Show `cutlist.md` to the user and get a yes** before rendering, and write "cutlist approved <date>" in `EDIT_STATE.md` first. Read its "Review these" and "Checks" lines: retakes it was unsure about, words that may be Whisper inventions, and how many cuts landed in silence. Soft fillers (like, so, you know, matlab) are flagged, not cut: decide with the user.
 - Then render a quick preview and the real cut:
 
 ```bash
@@ -174,30 +181,35 @@ Full captions (styles 1-10) for talking-head Shorts; **selective captions for mo
 
 `--highlight key|active|both|none` sets what gets coloured (the user's request wins over the style default). If the script prints `WARN fonts missing`, fetch them first: a missing font is silently substituted and the captions look subtly wrong.
 
-Rules for every style (reasons in `references/captions.md`): body captions about 4 to 5% of frame height; key word chosen by **meaning**, never at random, at most one per caption group; captions never cover the face; 9:16 captions stay inside the cross-platform safe box (y 288 to 1248 of 1920; the script defaults to y = 0.60); each caption on screen at least 0.5 s; break groups on breaths and sentence ends. Also export the `.srt` for YouTube upload (accessibility and search). For designed, behind-the-subject cinematic captions use HyperFrames `/embedded-captions` (see `references/captions.md`).
+Rules for every style (reasons in `references/captions.md`): body captions about 4 to 5% of frame height; key word chosen by **meaning**, never at random, at most one per caption group; captions never cover the face; 9:16 captions stay inside the platform's safe zone (pass `--platform reels|tiktok|shorts|cross`; the script sizes lines to fit and WARNs on anything outside); `--hook-until <s>` keeps captions off the screen while a hook title is up; each caption on screen at least 0.5 s; break groups on breaths and sentence ends. Also export the `.srt` for YouTube upload (accessibility and search). For designed, behind-the-subject cinematic captions use HyperFrames `/embedded-captions` (see `references/captions.md`).
 
 The italic-serif styles (2, 4, 5) are a deliberate editorial trend. Italics read as "tilted" in motion, so keep them to single key words held at least 0.6 s.
 
 ## 7. Sound, finish and QA
 
+Pipeline order (each step works on the previous step's output; never skip back):
+1. rough cut (`render_cut.py`) 2. colour (`grade.py`) 3. graphics (`overlay.py`, or the composition) 4. captions (`captions.py --burn`) 5. sound and encode (`finish.py`) 6. QA (`qa.py`, `safezone.py`, `qa/qa-look.md`).
+
 ```bash
-python3 scripts/finish.py renders/v3_captions.mp4 renders/v4_final.mp4 --platform youtube \
-        --music work/music/bed.mp3 --music-db -22 --duck [--sfx work/sfx.json] [--denoise]
-python3 scripts/qa.py renders/v4_final.mp4 --edl work/edl.json --captions work/captions_viral.ass --platform youtube
+python3 scripts/finish.py renders/v3_captions.mp4 renders/v4_final.mp4 --platform reels \
+        --music work/music/bed.mp3 --duck [--voice-chain full] [--sfx work/sfx.json] [--denoise]
+python3 scripts/qa.py renders/v4_final.mp4 --edl work/edl.json --captions work/captions_viral.ass --platform reels
 ```
 
 - **Colour first, if the footage needs it** (`references/color-grading.md`): match B-roll/AI shots to the A-roll (`grade.py --match`), preview a look (`grade.py in.mp4 --look warm --still 4`), apply it or a `.cube` LUT, grain 1-5% for the motion-reel register. Grade before captions.
 - **Sound source:** the user chose Epidemic Sound or free sources at intake; note every file's source and licence in `EDIT_STATE.md` (`references/sound-design.md`).
 - Sound effects only where something visibly changes. Risers use `"end_at"` in `sfx.json` so they peak on the hit frame; repeated SFX are auto-varied a few percent; text pops sit 8-14 dB under impacts. Explainers: at most about one SFX per second, none on top of key words.
+- The bed is placed 20 LU under the **measured voice** (`--music-sep`), the duck follows the voice level, and SFX `db` values are relative to the voice peak, so a quiet narrator never ends up under the music. `--voice-chain full` adds a compressor and de-esser for uneven or harsh recordings.
 - Music bed 16-25 dB under the voice, ducked with 600 ms - 1 s recovery (`--duck`, default 700 ms), no vocals under speech, a change of track or energy every 60-90 s. Stop it dead before a reveal with `--music-stop <t>` (rings out as a short reverb tail; `--music-tail cut` for a hard stop).
 - **Closed Eye Test** before calling the sound done: if the cut is not engaging with eyes closed, fix voice, rhythm and gaps before any visual polish.
 - Deliver -14 LUFS integrated, -1 dBTP max (YouTube, Shorts, Reels, TikTok). `finish.py` does two-pass loudness normalisation and the platform encode (H.264 high, yuv420p, BT.709 tags, AAC 48 kHz, faststart).
-- `qa.py` must show no FAIL. Then **look** at `qa/cuts.png`, `qa/captions.png`, `qa/overview.png`. Fix and re-run until clean.
+- `qa.py` must show no FAIL (it exits 1), and every WARN needs a written disposition. Then **look** at `qa/cuts.png`, `qa/captions.png`, `qa/overview.png` and, for 9:16, `qa/safezone_<platform>.png`, and write `qa/qa-look.md`.
+- **Safe zone, always, for 9:16** (the user's standing rule): every word, logo and graphic sits inside the platform's box and off the button rail. Instagram Reels: 220 px top, 420 px bottom, 1010 px wide, like/comment rail in the bottom-right corner. HyperFrames graphics: `python3 scripts/safezone.py html work/gfx/<dir> --platform reels` (exact, every visible text box, 10 samples per second). Transparent overlays: `safezone.py alpha <file.mov>`. Reference: `assets/safe-zones/`.
 - Platform specs, safe zones, thumbnails and chapters: `references/platforms-and-styles.md`.
 
 ## 8. Review rounds and learning
 
-Show the user each stage before the next: rough cut, visuals plan, graphics, captions, final. Keep every version (`v1`, `v2`, ...) so they can compare. Never overwrite source footage.
+Show the user each stage before the next: rough cut, visuals plan, graphics, captions, final. If the user is away: cutlist, storyboard and final delivery are hard holds (wait); graphics and caption iterations may continue with the assumption written in `EDIT_STATE.md`. Keep every version (`v1`, `v2`, ...) so they can compare. Never overwrite source footage.
 
 When they give notes ("at 0:22 do X", "too busy", "that flash at 0:14 is a mistake"), fix exactly those, re-render, re-run QA. After each round ask: **"Should I add what we learned to the skill?"** On yes, append the rule, with its reason and the example, to `assets/learned-rules.md` (or the user's own copy of this skill). Read that file at the start of every project: it is how this editor becomes theirs.
 
@@ -236,9 +248,11 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | `references/motion-prompt-research.md` | deep dive: what 513 Opus 5.5 video prompts reveal, best full prompts |
 | `references/tooling-research.md` | verified ffmpeg recipes, transcription engines (incl. Hindi), auto-editor, other public video skills, asset licences |
 | `references/qa-checklist.md` | the pre-delivery checklist |
+| `references/mistakes-and-fixes.md` | every mistake class found in an audit of this skill, by stage, with the automatic guard or the exact manual check |
 | `assets/style-card-template.md`, `assets/edit-state-template.md`, `assets/learned-rules.md` | style card to fill; project state file; rules learned from the user's notes |
 | `assets/storyboard-template.json`, `assets/style-lab.md` | the 7-field storyboard to fill; the persistent Keep/Maybe/Drop motion and sound vocabulary |
-| `assets/hyperframes/` | tested starters: kinetic-reel (9:16 genre reel), lower-third, stat-counter |
+| `assets/hyperframes/` | tested starters: kinetic-reel (9:16 genre reel, `data-platform` safe-zone stage, auto-fit text), lower-third, stat-counter |
+| `assets/safe-zones/` | the user's Reels safe-zone reference image and transparent guide PNGs per platform |
 
 ## Scripts (all standard-library Python + ffmpeg; run with `--help` for options)
 
@@ -261,7 +275,8 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | `fetch_fonts.py` | downloads Google Fonts TTFs for captions and graphics |
 | `captions.py` | 12 caption styles (incl. kinetic two-tier and feed) as word-timed ASS + SRT, `--selective`, burn-in |
 | `finish.py` | voice clean-up, music bed with ducking, music stop + reverb tail, varied SFX, risers that end on the hit, two-pass -14 LUFS, platform encode |
-| `qa.py` | spec/loudness/black/freeze/flash checks, cut and caption review sheets |
+| `qa.py` | spec/loudness/black/freeze/flash/mono checks, cut, caption and safe-zone review sheets; exits 1 on FAIL |
+| `safezone.py` | 9:16 safe zones: exact text-box audit of HyperFrames compositions, alpha audit of overlays, overlay sheets, design guides |
 
 
 # ===== FILE: INSTALL.md =====
@@ -300,6 +315,205 @@ After each stage: what you made (paths), what you checked and how (which frames,
 ## Credits
 
 Built on Luv Sankhla's AI Video Editor skill, WeAreNoCode's YouTube-editor workflow and 20 Looks, HeyGen HyperFrames (Apache-2.0) skills, Tella's open-source zoom and b-roll skills, browser-use/video-use, and sourced design and attention research (see `references/`). Fonts are downloaded from Google Fonts (OFL) at use time; no music, footage or logos are included.
+
+
+# ===== FILE: references/mistakes-and-fixes.md =====
+
+# Mistakes an AI editor makes, and the guard for each
+
+Built from a 6-lens audit of this skill (rough cut, captions, sound, motion graphics, colour and sourcing,
+workflow) plus HyperFrames engine issues and motion-craft research, October 2026. Every item was checked
+against the scripts before it went in. **[AUTO]** means a script now catches it; **[CHECK]** means it stays a
+human or agent check, with the exact check to run. Read the section for the stage you are in.
+
+## Contents
+1. The meta-rules (how editors lie to themselves)
+2. Rough cut
+3. Captions and on-screen text
+4. 9:16 safe zones
+5. Sound
+6. Motion graphics and HyperFrames
+7. Colour and visual sourcing
+8. Ads, disclosure, licences
+9. What the AI cannot do at all
+
+## 1. The meta-rules
+
+- **"I looked at it" must leave a trace.** After `qa.py`, write `qa/qa-look.md`: one verdict line per sheet
+  ("cuts.png: 14 edit points, 2 jumps re-punched at 0:41 and 1:03"; "safezone_reels.png: all text inside";
+  "captions.png: 24 groups, no face overlap, fixed 'Ananya'"). No qa-look.md means not done.
+- **"Could not check X" needs an attempt.** Write it as "tried <command>, failed: <exact error>". A deliverable
+  that was never rendered carries the banner UNRENDERED, NOT VERIFIED and is never called done.
+- **WARN is not PASS.** `qa.py` exits 1 on FAIL; every WARN line needs a written disposition in
+  `EDIT_STATE.md` (fixed, or accepted with the reason) before delivery. Black frames, freezes and dead air are
+  WARNs because sometimes they are intentional, not because they are harmless.
+- **Approvals are written, not remembered.** Cutlist approval, reorder approval, storyboard approval and final
+  approval each get a dated line in `EDIT_STATE.md` before the step that depends on them runs.
+- **When the user is away:** cutlist, storyboard and final delivery are hard holds (wait). Graphics and caption
+  iterations may proceed with the assumption written down.
+- **A green exit code is not a correct video.** Read logs, look at frames, measure. (HyperFrames can exit 0 on a
+  near-still render; see section 6.)
+
+## 2. Rough cut
+
+| Mistake | Guard |
+|---|---|
+| Retake logic deleted a real sentence sitting between an abandoned take and its restart | [AUTO] `plan_cuts.py` only removes hesitation between them; otherwise keeps both and lists it under "Review these" |
+| A short kept word ("I", "no") under 0.25 s vanished from the video and the captions | [AUTO] short segments are widened, never dropped; cutlist prints "N/N kept words placed" and a WARNING on any mismatch |
+| Fixed -38 dB silence threshold: no pauses found on quiet speakers, fake pauses inside music beds | [AUTO] threshold calibrated to the speech level; cutlist reports how many boundaries landed in silence and warns under 50% |
+| Whisper invents words over silence; they become kept speech and captions | [AUTO] low-confidence words inside silences are flagged for review (`--drop-silent-words` removes them). [CHECK] read every flagged word |
+| Variable-frame-rate phone footage passes as 30 fps; every cut and caption drifts | [AUTO] `probe.py` measures real frame timestamps; `plan_cuts.py` refuses VFR until re-encoded (command printed) |
+| 20 ms join fades are shorter than one AAC frame; clicks survive | [AUTO] default 30 ms |
+| Punch-in lands under a graphic | [AUTO] `render_cut.py --no-punch 12-15.5,30-34` (edited-timeline ranges from the storyboard) |
+| Punch crop slightly stretched | [AUTO] crop height derived from width |
+| `-fps_mode cfr` dup/drop on odd frame rates | [AUTO] output rate pinned to the source's exact rate |
+| verify_cut passed with a clipped word because the match ratio was high | [AUTO] exits 1 on any missing/changed word; uses the source's own model; drift tolerance 250 ms (Whisper's own jitter) |
+| verify_cut cannot catch what both speech passes mishear or invent | [CHECK] it only catches gross render damage. Listen to every join, or write "listened to N joins at <times>" in EDIT_STATE.md |
+| Reframe crops the centre before the first face detection | [AUTO] back-filled from the first detection; WARN for sections where the face was found under half the time |
+| J/L cuts asked for but the renderer only makes hard cuts | Honest limit: `render_cut.py` cuts A-roll picture and sound together. Get J/L feel by laying B-roll or a cutaway across the join (`overlay.py` cutaway mode keeps the base audio running), not by offsetting the A-roll audio |
+| Hinglish auto-detected as English and translated | [CHECK] always pass `--language hi` (or the real language) for Hindi/Hinglish; a fluent English transcript of Hinglish audio is a translation, not a transcript |
+| Speaker interjection ("Right.") removed as part of a retake in a 2-person recording | [CHECK] multi-speaker recordings: read every retake in cutlist.md before approving |
+
+## 3. Captions and on-screen text
+
+| Mistake | Guard |
+|---|---|
+| Key words at 1.6x size or 36% apex not counted in the width model; lines overflow | [AUTO] widths use each word's real size and font, plus the outline |
+| Groups too wide even at 70% size, rendered overflowing silently | [AUTO] WARN naming each group |
+| Apex word shrunk to irrelevance on 9:16 | [AUTO] WARN under 60%; pick a 4-7 letter key word |
+| `--style-json` font without a width estimate | [AUTO] WARN; measure `char_w` |
+| "well-known" glued to "wellknown"; "e.g." to "eg" | [AUTO] dashes become spaces; abbreviations kept |
+| Unreadable flashes (>25 characters per second) | [AUTO] WARN listing them; condense or lower `--max-words` |
+| Hook title and captions on screen at once | [AUTO] `--hook-until <s>` suppresses captions under the hook |
+| Burned captions plus uploaded CC = double text | [AUTO] note on every burn; upload the SRT as a separate track or not at all |
+| 16:9 captions inside YouTube's bottom UI band | [AUTO] default y 0.83 |
+| Silent libass font substitution | [AUTO] WARN when a style's font files are missing (only when burning). [CHECK] compare one rendered frame against the font specimen |
+| Raw Whisper word timing (+/-100-300 ms) breaks the "highlight within 80 ms" rule | [CHECK] for karaoke/active highlight styles, align first (stable-ts `align()` or WhisperX); otherwise use key or static styles |
+| Faces covered by body captions | [CHECK] captions.png and the safe-zone sheet; move with `--y`. Apex words in style 11 may overlap faces, body captions may not |
+
+## 4. 9:16 safe zones (the user's standing rule)
+
+Every word, logo and graphic that must be read sits inside the platform's safe box and off the button rail.
+Instagram Reels (organic, the user's spec): 220 px top, 420 px bottom, 1010 px wide (x 35-1045, y 220-1500),
+with the like/comment/share column in the bottom-right corner (x > 950, y > 1340). Other platforms and the
+cross-posting box: `platforms-and-styles.md` PART B. Reference image: `assets/safe-zones/`.
+
+| Where text comes from | Guard |
+|---|---|
+| Captions (`captions.py`) | [AUTO] `--platform reels|tiktok|shorts|cross` sets the width and position limits and WARNs on any group outside the box or on the rail |
+| HyperFrames compositions | [AUTO] `safezone.py html <dir> --platform reels` seeks the timeline 10x per second and measures every visible text box (ink-accurate within ~7 px) |
+| Transparent overlays (MOV/WebM) | [AUTO] `safezone.py alpha <file> --platform reels` reads the alpha channel |
+| Burned text in footage, logos, final deliverable | [CHECK] `qa.py` draws the box on sampled frames (`safezone_<platform>.png`); LOOK at it |
+| Designing | `safezone.py guide` or `assets/safe-zones/guide_<platform>.png` as a temporary layer (never rendered) |
+| The kinetic-reel starter | `data-platform="reels"` (or tiktok, shorts, cross, reels-ad) sizes the stage to the box; text auto-fits, including the 112% apex slam |
+
+Cross-posting to TikTok/Shorts as well: use `cross`; it is narrower (TikTok's rail starts at y 840), so
+captions get shorter groups. Instagram-only: use `reels` for fuller lines.
+
+## 5. Sound
+
+| Mistake | Guard |
+|---|---|
+| 16-bit premix clipped coincident peaks permanently | [AUTO] 32-bit float premix |
+| Mono voice collapsed a stereo music bed to mono | [AUTO] voice upmixed to stereo before the mix; `qa.py` WARNs on mono output |
+| Music, ducking and SFX set in absolute dBFS: a quiet narrator ended up under the music | [AUTO] bed placed `--music-sep` LU (default 20) under the measured voice; duck threshold follows the voice; SFX `db` relative to the voice peak |
+| Risers placed by file edges, peaking early | [AUTO] `end_at`/`peak_at` land the file's loudest sample on the frame |
+| De-esser and compressor promised in the docs, missing in the script | [AUTO] `finish.py --voice-chain full` (compressor 3:1, then de-esser) |
+| Silent input crashed with a misleading error | [AUTO] clear "audio is silent" error |
+| SFX placed past the end vanished silently | [AUTO] WARN and skip |
+| Duck pumping at phrase starts (8:1 ratio) | [AUTO] 4:1, 700 ms recovery |
+| Bed with vocals under narration | [CHECK] ask at intake; listen to the bed alone |
+| Content-ID: Short over 60 s with a claimable track | [CHECK] music source + licence in EDIT_STATE.md before upload |
+| Epidemic Sound track used after the subscription lapsed | [CHECK] note "subscription active at publish: yes, <date>" next to every Epidemic track ID |
+| No room-tone glue: noise floor steps at every cut | [CHECK] listen with eyes closed at joins; lay a quiet room-tone bed (-45 to -50 dB) under dialogue when steps are audible |
+| Denoise learning its profile from speech (no quiet lead-in) | [CHECK] only use `--denoise` when the recording starts with room tone |
+
+## 6. Motion graphics and HyperFrames
+
+**Engine traps (verified in HyperFrames issues/docs):**
+- Render exits 0 with a near-still video when the composition script throws (issue #3352). Read the render log
+  for `Composition script failed` / `sub_timeline_readiness_timeout`; sample frames and require at least 3
+  distinct frames.
+- Nested paused timelines report duration 0: all-black render with lint/check passing (issue #3419). One flat
+  registered timeline per composition.
+- `--fps 60` renders GSAP motion at 30 fps with duplicated frames (issue #1737). Render DOM/GSAP motion at
+  30 fps; 60 only for shader-led pieces.
+- `from()` desyncs on seek and can animate 0 to 0 against a hidden start: use `fromTo` only.
+- A standalone `gsap.to()` not on the registered timeline never renders.
+- `repeat: -1` breaks capture: use finite repeats, `Math.floor(dur / cycle)`.
+- Register the timeline LAST. Font-load-then-build is fine only if registration is the final line (the
+  kinetic-reel starter does this).
+- Snapshots can be stale in multi-composition projects: identical hashes at different times = stale; render
+  at low quality for ground truth.
+- WebM alpha shows black in editors and Safari: ship ProRes 4444 MOV for anything leaving the browser.
+- Clip windows are half-open: resolve end states at least one frame early.
+- Never paint backgrounds on html/body/root for alpha renders; use a full-bleed layer.
+- `src` goes on `<audio>/<video>` itself, never on a `<source>` child.
+
+**Craft mistakes:**
+- **Fonts flash in a fallback face** for the first frames: load the exact faces (`document.fonts.load('400
+  330px "Anton"')`) before building, then register last.
+- **Real copy longer than the example** clips off-frame: shrink-to-fit at build (the starter's `fitText`),
+  checked against the slam scale.
+- **Measure at the slam, not at rest.** A 112% entrance pushes text past the box for 5 frames; dense sampling
+  in `safezone.py` catches it.
+- **Climax late against the word:** in `graphics.json` give `"at": <word time>, "climax": <seconds into the
+  graphic>`; `overlay.py` starts it early so the climax lands on the word. Frame-check the word time.
+- **Graphic past the end of the video** never appears: `overlay.py` refuses.
+- **Missing vendored files** after copying a starter (gsap.min.js, fonts/, grain.png): copy the whole folder;
+  the null-timeline error means gsap.min.js is missing.
+- **Captions burned before graphics** end up under plates: pipeline order is cut, grade, graphics, captions,
+  finish.
+- **Intentional hard pops reported as glitches:** `qa_graphic.py --beats` with the beat times; never soften a
+  designed pop into a fade to silence a warning.
+- **Double grain** (footage grain plus graphic grain): grain the footage OR the graphic, not both.
+- **Everything with one duration and ease** reads as template-made: vary by importance (entries 0.3-0.8 s).
+- **No exits:** every element that enters must leave or be explicitly persistent.
+- **Ease on the wrong property:** position and scale ease out; opacity linear or gentle; overshoot only on
+  small elements.
+- **Character stagger on long copy:** character stagger only for headlines up to ~8 words; group reveals under
+  0.8 s.
+- **One-frame flash in the end position** before an entrance: set the initial state at the exact time the
+  layer's window opens.
+- **Dead holds read as a stalled player in muted feeds:** fully static over ~0.8 s needs ambient motion (grain
+  drift, slow push); a read-hold after a climax is fine.
+- **Sub-pixel shimmer on slow moves:** round interpolated translate values to whole pixels.
+- **Gradient banding:** avoid low-span gradients; dither with grain at the gradient; interpolate stops in OKLCH.
+- **Weight ramps on proportional fonts re-wrap lines:** variable monospaced fonts only.
+- **Stacked reads:** keep reads at least 0.3 s apart within a beat.
+- **Determinism test:** render twice and diff a mid frame; any difference is a seek bug (random numbers, CSS
+  keyframes, timers).
+
+## 7. Colour and visual sourcing
+
+| Mistake | Guard |
+|---|---|
+| HDR source graded as SDR, tagged BT.709 | [AUTO] `grade.py` refuses HDR without `--tonemap` |
+| `--look` and `--lut` together (double grade) | [AUTO] refused |
+| Creative LUT applied at 100% | [AUTO] LUT-only defaults to 75% |
+| Match gains clamped silently / clipping faces | [AUTO] WARN at the clamp and on strong gains; check skin on `--still` |
+| Glow invisible at 4K, fog at 540p | [AUTO] blur scales with resolution |
+| Grading the captioned or already-graded file | [AUTO] WARN by filename; always grade the ungraded master |
+| Mixed lighting (tungsten + daylight) in one frame | [CHECK] a global match cannot fix it: Resolve with power windows, or reshoot note |
+| Phone auto-exposure flicker | [CHECK] look for pumping brightness; ffmpeg `deflicker` for affected clips |
+| Pinterest or watermarked stock shipped | [CHECK] every raster asset needs a source URL and licence line; Pinterest without the original's licence = FAIL |
+| AI shots drifting (face, palette) between scenes | [CHECK] one base image per character, Higgsfield with character reference + logged seed; compare frames side by side |
+| Accent colour near skin hue | [CHECK] keep the accent at least 25-30 degrees of hue away from skin |
+
+## 8. Ads, disclosure, licences
+
+- **When in doubt, disclose.** Any synthetic human appearance or AI voice in paid creative gets a conspicuous
+  on-screen disclosure, in every market. The New York audio-only exemption does not exist in the EU AI Act;
+  exemptions are narrow and jurisdiction-specific and never the default.
+- **`finish.py` re-encodes and strips C2PA/provenance metadata.** Keep the pre-finish master (or the AI tool's
+  original export) as the provenance record, and never claim provenance survived the export.
+- Licence lines need a source URL or licence name per file; "free" without a source is not a licence.
+
+## 9. What the AI cannot do at all
+
+It cannot hear (timbre, harshness, groove, whether a bed fits), cannot judge taste reliably from a single
+frame, and cannot prove a licence. Mitigation is structural: meter everything, keep the human checks (Closed
+Eye Test, phone-speaker listen, the 15-second promise stopwatch), and never let a meter PASS stand in for them.
 
 
 # ===== FILE: references/motion-reels.md =====
@@ -405,8 +619,20 @@ on both surfaces. A landscape master is a legitimate option, not an error.
 
 Sizing in libass: the font size is not the cap height. Anton capitals are about 50% of the font size, most
 grotesques about 70%. `captions.py` style 11 sets the apex font at 36% of frame height, which lands about
-18% cap height. On 9:16 a long apex word shrinks to fit the safe width; that is physics, not a bug. Keep apex
-words short (one word, ideally 4-7 letters) when the format is vertical.
+18% cap height (36% x 0.5). Do not "correct" this with the 0.7 ratio of other fonts: with Anton that would
+ask for a 26% font and blow the safe width. On 9:16 a long apex word shrinks to fit the safe width; that is
+physics, not a bug. Keep apex words short (one word, ideally 4-7 letters) when the format is vertical.
+
+**Safe zone.** Every apex word, whisper line, annotation label and end-card line must sit inside the
+platform's safe box (`platforms-and-styles.md` PART B; the user's Instagram reference is
+`assets/safe-zones/reels-safe-zone-reference.png`: 220 px top, 420 px bottom, 1010 x 1280 px safe area, the
+like/comment rail bottom-right). The kinetic-reel starter takes `data-platform="reels|reels-ad|tiktok|shorts|cross"`
+on `#root` and its `fitText()` shrinks each word to that stage, reserving room for the 1.12 slam overshoot
+and the annotation ellipse. Prove it with `python3 scripts/safezone.py html <dir> --platform <zone>` (PASS
+required) before rendering.
+
+**Grain once.** Grain the footage (`grade.py --grain`) OR the graphic layer (`grain.png`), never both on the
+same pixels: stacked grain doubles the noise and the encoder smears it into blocks.
 
 ## 4. Kinetic-type toolkit (2025-2026)
 
@@ -498,7 +724,7 @@ words short (one word, ideally 4-7 letters) when the format is vertical.
 
 - **Status pulses are information, not idle wobble.** A heartbeat circle, a rotating dashed gear (linear), or
   staggered network dots that say "this system is running now" are allowed; transform/opacity only, inside a
-  finite timeline. Source: IT Master (C0yro0rgSII) 06:33-08:29.
+  finite timeline: `repeat: Math.floor(sceneDuration / cycle) - 1`, never `repeat: -1`. Source: IT Master (C0yro0rgSII) 06:33-08:29.
 - **Glass is conditional.** Allowed faint, bordered and behind type (never on the type itself); still banned as
   the default chrome of a whole video. The successor treatment is a soft ambient mesh gradient.
 - **Glow** stays banned by default; lightyear's soft glow on Didone caps is a deliberate Look choice, allowed
@@ -581,6 +807,12 @@ Minimal standalone `index.html`:
 ```
 
 Rules that `lint` enforces or that fail silently:
+- **`fromTo` only**, never `from` or `to` alone on anything the renderer may seek into: `from` records its end state at creation time and breaks on a backwards seek.
+- **One flat timeline.** No nested timelines started by callbacks, no `tl.call()` that starts other tweens, no `onComplete` chains. Everything sits on the one paused timeline at an absolute position.
+- **Register the timeline LAST**, after fonts are loaded and the layout is final: `Promise.all([document.fonts.load("900 120px Anton"), ...]).then(build, () => build())`, where `build()` measures text, then creates the timeline, then sets `window.__timelines[id]`. Registering earlier renders the first frames with fallback metrics, and fit-to-width math is wrong.
+- **Finite repeats only.** `repeat: Math.floor(duration / cycle) - 1`, never `repeat: -1` (an infinite tween makes the timeline length infinite and some renders hang or cut).
+- **No background on `html` or `body`.** Put the background on the root element (or leave it transparent for overlays); a body background is either dropped or it kills alpha.
+- **Media `src` on the element itself**, never on a `<source>` child and never set later by JS.
 - Exactly one paused GSAP timeline per composition, registered at `window.__timelines["<composition-id>"]`. Render length is the root `data-duration`, not the timeline length.
 - Never pair a CSS `transform` with a GSAP tween on the same element and property: use `gsap.fromTo`. Centre with flex/inset, not `translate(-50%,-50%)` on something GSAP moves.
 - Never tween `display`, `visibility` or `autoAlpha` on a `.clip`: animate a child. The runtime owns clip visibility.
@@ -733,6 +965,11 @@ Pacing: explainer scenes 3-6 s; narrated pieces change something about every 1.5
 4. After rendering, check decoded frames from the MP4, not browser screenshots. Look for single-frame pops (a frame differing about 3x more than its neighbours).
 5. Judge each graphic once against brand consistency, interest and relevance; redo only the clearly bad ones. No endless redo loops (cap at 3 passes).
 6. Fast motion with no motion blur strobes: for moves over about 2-3% of frame width per frame, render 4-8 subframes and average them, or keep the move slower.
+7. **Safe zone (9:16):** `python3 scripts/safezone.py html <composition dir> --platform <zone>` must print PASS. It samples 10 times per second, so a 0.2 s slam overshoot is caught. Text that is meant to bleed (giant background word) gets `data-safe-ignore`.
+8. **Read the render log**, not just the exit code: font fallback, missing asset and "timeline not found" messages appear there while the render still "succeeds".
+9. **At least 3 distinct frames.** Extract frames at 25%, 50% and 75% of the render; if they are identical, the timeline never ran (registered late, wrong id, or a JS error) and the MP4 is a still.
+10. **Determinism:** render twice and diff a few frames (`ffmpeg -i a.mp4 -i b.mp4 -lavfi psnr -f null -`); any difference means wall-clock time, randomness or a race crept in.
+11. **Snapshots go stale.** After editing the HTML, re-run `snapshot` before judging; an old PNG in the folder proves nothing.
 
 ## 13. Conflicts between sources, resolved
 
@@ -956,14 +1193,19 @@ ASS limits to know: the pill box has square corners (libass cannot round them); 
 
 ## 4. Sizing and placement
 
-- "Size" here always means the font size (the em, what `size_pct` and ASS `Fontsize` set), not the cap height. Capitals are about 0.7 em tall, so a 92 px caption has roughly 65 px capitals. When matching a reference, calibrate by the measured width of a line of text, not by eye on letter height.
+- "Size" here always means the font size (the em, what `size_pct` and ASS `Fontsize` set), not the cap height. Capitals are about 0.7 em tall in most grotesques (a 92 px caption has roughly 65 px capitals), but condensed display faces differ: Anton capitals are about 0.5 em. When matching a reference, calibrate by the measured width of a line of text, not by eye on letter height.
 - The fonts must actually load. libass substitutes a system font silently when a family or weight is missing, and the result looks almost right but wider or narrower. `captions.py` prints a WARN when the style's font files are missing from `--fonts`; fetch them with `fetch_fonts.py`. Weights other than 400/700 are requested by legacy names ("Montserrat Black"), which the script handles.
 - Body captions: font size about 4.5-5% of frame height (48-55 px at 1080p landscape; 86-96 px at 1080x1920). Hook/punch size: 6-9%. Never below 2.6% (28 px at 1080) for anything that must be read.
 - 16:9: centred low (script default y = 0.86), but keep the bottom ~12% free of critical text on YouTube (progress bar, auto-captions).
+- **Pass `--platform` on every vertical caption run** (`reels`, `reels-ad`, `tiktok`, `shorts`, `cross`; default `cross`). It sets the line width from that platform's safe box and rail, and the script WARNs when a group overflows it. `cross` is narrow (about 480 px at caption height, because of the TikTok rail), so captions split into more, shorter groups; for an Instagram-only reel use `--platform reels` (box 35-1045 x 220-1500, rail x > 950 below y 1340, the user's reference in `assets/safe-zones/`). Full table: `platforms-and-styles.md` PART B.
+- `--hook-until S` hides captions for the first S seconds while a hook title or graphic is on screen, so the two never stack.
 - 9:16: centred around y = 0.60 (1150 px of 1920). Cross-platform safe box for anything that must be read: x 120-888, y 288-1248. Below 1248 the TikTok/Reels/Shorts description and buttons cover it; the right rail (x > 780 from y 840 down) holds like/comment/share. Platforms publish no official organic pixel specs, so these are measured values that change: re-check templates for ads.
 - Faces: captions never cover the eyes or mouth. Speaker's eyes around 30-40% from the top in 9:16 so captions sit below the chin. If a frame shows overlap, move the captions (`--y`) for that video rather than shrinking them.
 - Hook text (first 1-3 s of a Short): upper middle, y about 300-600. Never two text blocks competing: while a hook title or a graphic with words is on screen, either hide the captions for those seconds or keep the two clearly separated (title top, captions low), never stacked at the same height.
 - Face fills the frame (tight vertical close-up): there is no room below the chin, so put captions in the upper third (y about 0.25-0.30) or on the chest only if the mouth stays clear. Check a frame; the default y is a starting point, not a rule.
+
+- **Double captions.** Burned captions plus the platform's auto-captions show the same words twice. When burning, tell the user to switch platform auto-captions off for that post, or upload the SRT instead of burning (never both).
+- Dashes in the transcript become spaces (never a literal dash glyph mid-caption); common abbreviations (Dr., U.S., e.g.) are protected from sentence splitting.
 
 ## 5. Grouping and timing
 
@@ -1086,6 +1328,9 @@ Distilled from browser-use/video-use, WeAreNoCode, chrislema/videoeditor and has
 - **Eye-trace:** across a cut, keep the subject of interest within about 10-20% of frame width of where the eye already was. Break it only on purpose (a pattern interrupt).
 - **Cut on action:** cut during movement and continue it in the next shot; motion hides the cut [MODERATE, edit-blindness research].
 - **J-cut:** the next clip's audio starts 0.25-1 s before its picture (leads into a new speaker or scene). **L-cut:** the previous audio continues over the new picture (B-roll under the voice). Use on at least half of the scene transitions in interview and documentary edits.
+  Honest limit: `render_cut.py` cuts audio and picture together. Build a J/L cut by laying B-roll or a
+  cutaway over the join with `overlay.py` (the voice carries across, the picture changes early or late); true
+  split edits of the A-roll need an NLE.
 - **Jump cuts in a talking head:** remove pauses over about 300-500 ms and filler; keep 2-6 frames of breath at phrase edges; alternate framing (punch-in) on every 2nd or 3rd cut to hide the jump.
 - **Smash cut:** a sudden loudness change (loud to silence or the reverse) sells it.
 - **Vary shot lengths.** Film shot lengths cluster in mixed runs of short and long (Cutting 2010, [STRONG] for the trend). A metronome rhythm reads as machine-made: cluster fast cuts in high-energy passages, let shots breathe after reveals.
@@ -1302,6 +1547,8 @@ The user has a paid **Epidemic Sound** plan. Every project, ask which source to 
 
 - **Epidemic Sound**: the user downloads the tracks/SFX (or gives the files); keep the licence crediting the
   plan requires, and note track IDs in `EDIT_STATE.md`. Channel/whitelisting is the user's account setting.
+  The licence covers videos published **while the subscription is active**: if the plan lapses, earlier
+  videos stay cleared, new uploads do not. Confirm it is active on the publish date.
 - **Free, copyright-safe**: YouTube Audio Library (check each track's attribution requirement), Pixabay Music
   and SFX, Mixkit, Freesound (CC0 or CC-BY only; CC-BY needs credit). Write the source URL and licence of
   every file into `EDIT_STATE.md`.
@@ -1315,7 +1562,13 @@ The user has a paid **Epidemic Sound** plan. Every project, ask which source to 
 - Delivery loudness: -14 LUFS integrated, -1 dBTP (`finish.py`). Mastering hotter buys nothing.
 - **Music bed under voice: 16-25 dB below the voice.** Auto-duckers (Premiere, CapCut) pin at about -16 to
   -20 dB of bed depth; the extra 3-5 dB of sidechain gain reduction is the icing applied after that, not the
-  cake. `finish.py --music-db -20 --duck` does both stages. [PRACTITIONER]
+  cake. `finish.py --music-sep 20 --duck` does both stages. [PRACTITIONER]
+- **The bed level is relative to the measured voice**, not an absolute number: `--music-sep 20` measures the
+  voice LUFS and the music LUFS and sets the bed 20 LU under the voice, so a quiet track and a slammed track
+  land at the same place. `--music-db` is the old absolute gain, kept only as an override.
+- **Voice chain:** `--voice-chain light` (high-pass 80 Hz only, default) or `full` (high-pass, 3:1 compressor,
+  then de-esser) for uneven mic distance or harsh S sounds. A mono voice is upmixed to stereo first; music is
+  forced to stereo, so the master never collapses to mono.
 - **Duck recovery 600 ms - 1 s** (`--duck-release`, default 700). Faster pumps audibly; slower buries the
   start of the next phrase under music. [PRACTITIONER]
 - **Dynamic EQ instead of (or under) broadband ducking:** dip only the music's 2-5 kHz presence band while the
@@ -1332,7 +1585,9 @@ The user has a paid **Epidemic Sound** plan. Every project, ask which source to 
 - **SFX only where something visibly changes** (a cut, a graphic landing, a number stopping). Explainers: at
   most about one per second, none on top of a key word.
 - **Riser ends AT the hit.** The riser's peak lands on the impact frame; early or late reads as a mistake. In
-  `sfx.json` use `"end_at": <hit time>` instead of `"at"` and `finish.py` places it so it ends on the frame.
+  `sfx.json` use `"end_at": <hit time>` (or `"peak_at"`) instead of `"at"`: `finish.py` finds the SFX's
+  loudest sample and lands THAT on the frame, not the file's edge. SFX `"db"` is relative to the voice peak
+  (-6 = 6 dB under the voice peak); an SFX that would start before 0 or run past the end is skipped with a WARN.
 - **Whoosh sits under the impact, as its own layer.** Riser builds anticipation, whoosh sells motion, impact
   sells weight: three jobs, three layers. A good whoosh itself has 3-4 frequency layers (sub sweep, mid noise
   band, high air, optional tonal element), each with its own EQ band, which is why it survives phone speakers.
@@ -1432,6 +1687,12 @@ python3 scripts/grade.py --look film --export-lut work/looks/film.cube     # shi
   33-point LUT that Resolve, Premiere, CapCut and ffmpeg all read. Verified: LUT output matches the direct
   chain within 1/255.
 - Always make the `--still` before/after first and look at skin, blacks and the brightest highlight.
+- **LUT-only runs default to 75% strength** (`--lut x.cube` without `--strength`): a creative LUT at 100% is
+  almost always too much on real footage. `--look` and `--lut` together are refused (pick one: they stack).
+- **HDR / HLG / PQ sources** (iPhone default) are refused unless you pass `--tonemap`, which converts to
+  BT.709 SDR (zscale + hable) before grading. Grading HDR as if it were SDR gives washed-out or neon results.
+- **Never grade a graded file.** Grade from the cut of the source, once. A filename containing `graded` or
+  `captions` makes the script WARN: captions must never be graded, and a second grade compounds the first.
 
 ## 3. Verified ffmpeg facts (and traps)
 
@@ -1473,7 +1734,8 @@ python3 scripts/grade.py --look film --export-lut work/looks/film.cube     # shi
 ## 6. What ffmpeg cannot do (say so instead of faking it)
 
 Tracked face relighting, AI subject masks (sky replacement, background-only grading), per-object keying,
-power windows that follow motion, and true HDR grading. For those, recommend DaVinci Resolve (free) and
+power windows that follow motion, true HDR grading, and **mixed lighting** (a face lit by a window on one side
+and a tungsten lamp on the other cannot be fixed by one global white balance). For those, recommend DaVinci Resolve (free) and
 deliver a LUT plus notes; do not promise a filter chain.
 
 
@@ -1588,6 +1850,15 @@ disclosed. Practitioner numbers are labelled [PRACTITIONER]; nothing here is pla
 - No specific caption treatment for avatar videos was found to matter; use the normal caption rules.
 
 ## Disclosure (verified 2026-10-11 against primary sources)
+
+**When in doubt, disclose.** A visible "AI-generated" or "synthetic presenter" label costs almost nothing in
+performance and removes the legal risk in every market below. Default to disclosing any AI person or voice in
+a paid ad; drop it only when the user confirms with counsel that it is not needed.
+
+**C2PA survives only on the master.** `finish.py` and every ffmpeg re-encode strip C2PA / Content Credentials
+metadata. Keep the AI tool's original export (with its provenance) in `source/` or `renders/masters/`, and
+tell the user the delivered MP4 no longer carries it, so platform "AI info" labels will not trigger
+automatically: they must set the platform's AI toggle by hand.
 
 - **New York, GBL section 396-b** (S.8420-A / A.8887-B, signed 11 Dec 2025, **in force since 9 June 2026**):
   an advertiser who knowingly uses a "synthetic performer" (an AI or algorithm-made person not recognisable as
@@ -1970,12 +2241,32 @@ The pixel figures below are those percentages or images converted to pixels by t
 
 | Platform | Top | Bottom | Left | Right | Source |
 |---|---|---|---|---|---|
-| **Instagram Reels** | 14% ≈ **269 px** | 35% ≈ **672 px** | 6% ≈ 65 px | 6% ≈ 65 px | [OFFICIAL %: Meta Ads Guide, https://www.facebook.com/business/ads-guide/update/video/instagram-reels]. Meta's canvas is 1440x2560; percentages scale. |
+| **Instagram Reels (organic, user's spec, skill `reels`)** | **220 px** | **420 px** | 35 px | 35 px, plus the like/comment/share rail bottom-right (x > 950 from y ≈ 1340 down) | The user's measured reference: safe area 1010 x 1280 px. Image: `assets/safe-zones/reels-safe-zone-reference.png`. This is the default for any Instagram-only organic reel. |
+| **Instagram Reels ads (skill `reels-ad`)** | 14% ≈ **269 px** | 35% ≈ **672 px** | 6% ≈ 65 px | 6% ≈ 65 px | [OFFICIAL %: Meta Ads Guide, https://www.facebook.com/business/ads-guide/update/video/instagram-reels]. Meta's canvas is 1440x2560; percentages scale. |
 | **TikTok (In-Feed)** | **240 px** | **660 px** | 120 px | 120 px, plus an action rail about **300 px wide from y≈840 px down** | [3RD-PARTY measurement of TikTok's official template: https://www.upload-post.com/tools/safe-zone-checker/, checked 2026-09-23]. Official templates: https://ads.tiktok.com/help/article/video-ads-specifications |
 | TikTok (alt. measurement) | 254 px | 707 px | 122 px | 242 px rail | [3RD-PARTY: https://adkit.so/tools/safe-zones/tiktok, March 2026] |
 | **YouTube Shorts** | **288 px** | **672 px** | 48 px | **192 px** | [3RD-PARTY reading of Google Ads Help image: https://www.upload-post.com/tools/safe-zone-checker/]. Image source: https://support.google.com/google-ads/answer/9128498?hl=en |
 
 **Caveats.** Margins vary by device aspect (for example 19.5:9 phones crop the sides), by caption length, and by whether an ad CTA is present. Meta asks for 40% bottom clearance on ads with disclaimers [3RD-PARTY citing Meta: https://www.inro.social/tools/instagram-reels-safe-zone-checker]. The platforms' UIs change several times a year.
+
+**The five zones the scripts know** (`--platform` on `captions.py`, `safezone.py`, `qa.py`; `data-platform` on the kinetic-reel starter). Box is x0, y0, x1, y1 on a 1080x1920 frame and scales to other vertical sizes:
+
+| `--platform` | Safe box | Rail no-go | Use when |
+|---|---|---|---|
+| `reels` | 35, 220, 1045, 1500 | x > 950 for y > 1340 | Instagram only, organic. Widest text, biggest captions. |
+| `reels-ad` | 65, 269, 1015, 1248 | x > 950 for y > 1100 | Instagram paid placement (Meta's 14/35/6% plus ad CTA). |
+| `tiktok` | 120, 240, 960, 1260 | x > 780 for y > 840 | TikTok only. |
+| `shorts` | 48, 288, 888, 1248 | x > 888 for y > 700 | YouTube Shorts only. |
+| `cross` (default) | 120, 288, 888, 1248 | x > 780 for y > 840 | One file posted everywhere. |
+
+**Trade-off, say it to the user:** `cross` is the narrowest box. Captions there wrap to about 480 px (the TikTok rail starts at y 840, right where captions sit), so a 60 s talk splits into roughly 40 caption groups instead of about 24 on `reels`. If the video goes to Instagram only, ask for `--platform reels`; posting a `reels` cut to TikTok puts text under the rail.
+
+**How the skill enforces it:**
+- `captions.py --platform X` derives max line width from the zone and prints WARN when a group would cross it.
+- `safezone.py html <composition> --platform X` seeks the HyperFrames timeline 10 times per second and measures every text box with ink-accurate bounds (canvas `measureText`, not the CSS content box). It FAILs with the element, time and edge. `data-safe-ignore` skips decorative text on purpose.
+- `safezone.py alpha <overlay.mov>` checks non-transparent pixels of an overlay against the zone.
+- `safezone.py guide --platform X` writes a transparent guide PNG (copies in `assets/safe-zones/guide_*.png`) to drop over a frame while designing.
+- `qa.py --safe X` writes `qa/safezone_<zone>.png`, a contact sheet of the final with the zone drawn: open it and look.
 
 **Universal cross-platform safe box (the intersection; skill default):**
 - Usable area: **x 120 to 888 (768 px wide), y 288 to 1248 (960 px tall)**.
@@ -4349,6 +4640,13 @@ Show the user the 5 s file and the QA lines. For HyperFrames: `npx hyperframes i
 
 Do not tell the user "done" until every line is checked or explicitly reported as not checkable.
 
+**Three rules about the result itself:**
+- `qa.py` exits 1 on any FAIL. A WARN is not a PASS: every WARN gets a written disposition in `EDIT_STATE.md`
+  (fixed / accepted because ... / user asked).
+- Write `qa/qa-look.md`: one line per sheet you opened and what you saw. A sheet you did not open is not checked.
+- Approvals are written, never assumed: the user's words, the date and what they approved go into
+  `EDIT_STATE.md` before the next stage starts. Full list of traps: `mistakes-and-fixes.md`.
+
 ## Before the build (gates)
 - [ ] Storyboard approved by the user (`storyboard.py` passed: contiguous scenes, verbatim VO, 2+ style options)
 - [ ] Visual sources decided (user assets / web with licences / Higgsfield yes-no / prompt pack) and every
@@ -4362,18 +4660,24 @@ Do not tell the user "done" until every line is checked or explicitly reported a
 - [ ] H.264 (or HEVC/AV1 on request), yuv420p, AAC 48 kHz, faststart, BT.709 tags
 - [ ] Duration matches the EDL (render_cut.py prints both); audio and video stream durations match (ffprobe)
 - [ ] No black frames, no frozen live footage, no flash frames (shots under 3 frames)
-- [ ] `python3 scripts/verify_cut.py <render> work/words_cut.json`: no clipped or ghost words at cut points; no drift over 120 ms
+- [ ] `python3 scripts/verify_cut.py <render> work/words_cut.json`: no clipped or ghost words at cut points; no drift over 250 ms (Whisper word times are only good to about +/-200 ms)
 - [ ] HyperFrames graphics: `npx hyperframes check .` 0 findings for every composition
+- [ ] 9:16: `qa.py <final> --safe <zone>` run; `safezone.py html <comp> --platform <zone>` PASS for every
+      composition; `safezone.py alpha <overlay.mov> --platform <zone>` PASS for every alpha overlay
+- [ ] `probe.py` warnings (VFR, HDR, odd fps, mono) each have a disposition
 
 ## Look (open every sheet yourself)
 - [ ] `qa/cuts.png`: every edit point invisible or intentional; no jump that the punch-in failed to hide
 - [ ] `qa/captions.png`: readable, correct spelling of names, inside the safe box, never over eyes or mouth, one highlight per group
+- [ ] `qa/safezone_<zone>.png`: no text, logo or CTA under the top UI, bottom description or the right rail
 - [ ] `qa/overview.png`: colour consistent shot to shot; nothing broken; rhythm varies
 - [ ] Every graphic frame (`npx hyperframes snapshot`): no clipped text, no overlaps, contrast holds, on-brand, lands on its word
 - [ ] First frame works as a thumbnail (Shorts) and the first 3 s already deliver the hook
 - [ ] Slop audit: at most 2 font families, 1 accent, no emoji icons, no default-banned effects unless chosen
 
 ## Listen (if you cannot hear audio, say so and list the timestamps the user should check)
+You cannot hear. Numbers (LUFS, peak, mono check) prove levels, not taste: write the timestamps of every music
+in/out, SFX and join into `EDIT_STATE.md` under "Listening note" and ask the user to listen to those.
 - [ ] Every join: no click, no clipped consonant, no doubled breath
 - [ ] Music never fights the voice; no vocals under speech; silence before reveals where planned
 - [ ] SFX land on visible events only
