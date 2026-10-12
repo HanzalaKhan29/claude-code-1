@@ -30,6 +30,7 @@ Install only what is missing, after the user says yes. One line of "why" per too
 | Node.js 22+ | HyperFrames | `brew install node@22` | `winget install OpenJS.NodeJS.LTS` | nvm: `nvm install 22` |
 | HyperFrames | HTML to video motion graphics | `npx hyperframes@latest doctor`, then `npx hyperframes browser ensure` | same | same |
 | HyperFrames skills | official composition workflows | `npx hyperframes skills update` | same | same |
+| Remotion (optional, per project) | React motion graphics with frame-level control | `cp -r assets/remotion <project>/work/remotion && cd <project>/work/remotion && npm install` (no global install; first render downloads Chrome Headless Shell) | same | same |
 | Transcription (one is enough) | word timestamps | `python3 -m pip install mlx-whisper` (Apple Silicon, fastest) | `python -m pip install faster-whisper` | `python3 -m pip install faster-whisper` |
 | yt-dlp (optional) | download reference videos | `brew install yt-dlp` | `winget install yt-dlp.yt-dlp` | `python3 -m pip install -U yt-dlp` |
 | opencv-python (optional) | face share in style analysis, face-centred reframe | `python3 -m pip install opencv-python` | same with `python` | same |
@@ -38,6 +39,8 @@ Install only what is missing, after the user says yes. One line of "why" per too
 
 Notes:
 - Homebrew ffmpeg: check filters with `ffmpeg -hide_banner -filters | grep -E " (subtitles|ass|drawtext|zoompan|sidechaincompress|loudnorm) "`. If `subtitles` is missing, `brew install ffmpeg-full` (or the tap that bundles libass).
+- Transcription on a GPU machine with a broken CUDA/cuDNN install: `transcribe.py` tries the GPU in a child process and falls back to CPU int8 on a crash. Pass `--device cpu` to skip the attempt.
+- Remotion licence: free for individuals, for-profit companies with up to 3 employees and non-profits; larger companies need a Company License (remotion.pro). HyperFrames is Apache-2.0.
 - Whisper models download on first use (hundreds of MB from Hugging Face). Corporate networks may block it; `transcribe.py` then falls back to `npx hyperframes transcribe` and finally reports every engine's error.
 - Model choice: `large-v3-turbo` for most work; `small` for quick drafts; `large-v3` for Hindi and accented speech. Parakeet (via `npx hyperframes transcribe -e parakeet` or `parakeet-mlx`) is very fast and accurate for English and European languages but has no Hindi.
 - auto-editor is optional. Note that PyPI ships 29.x while GitHub releases are 31.x with different flags (`--when-silent` vs `--when-inactive`); there is no `--export json` (use `--export v3`). This skill's `plan_cuts.py` does transcript-aware cutting without it.

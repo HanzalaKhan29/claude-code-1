@@ -15,6 +15,7 @@ human or agent check, with the exact check to run. Read the section for the stag
 7. Colour and visual sourcing
 8. Ads, disclosure, licences
 9. What the AI cannot do at all
+10. Technical traps from real projects (20)
 
 ## 1. The meta-rules
 
@@ -193,3 +194,31 @@ captions get shorter groups. Instagram-only: use `reels` for fuller lines.
 It cannot hear (timbre, harshness, groove, whether a bed fits), cannot judge taste reliably from a single
 frame, and cannot prove a licence. Mitigation is structural: meter everything, keep the human checks (Closed
 Eye Test, phone-speaker listen, the 15-second promise stopwatch), and never let a meter PASS stand in for them.
+
+## 10. Technical traps from real projects
+
+Entries 1-11 happened on the user's kinetic-essay project; 12-20 were found building and testing v4 of this
+skill (Remotion starter, safe-zone audits). Each has the check that prevents it.
+
+| # | Mistake | Check that prevents it |
+|---|---|---|
+| 1 | **GPU transcription crash.** faster-whisper on a machine with a broken or missing cuDNN/cuBLAS aborted the whole process (no Python error to catch), so the job died instead of falling back | [AUTO] `transcribe.py --device auto` runs the GPU attempt in a child process; a crash prints WARN and reruns on CPU int8. Machines that crash every time: `--device cpu` |
+| 2 | **Audio-only cut failed.** A voiceover for a motion reel had no picture; `render_cut.py` crashed looking for a frame rate | [AUTO] audio-only sources render to `.wav` (PCM) or `.m4a` (AAC) with the same de-click fades; `probe.py` says "audio-only source" |
+| 3 | **Whisper's early word timings.** Phrase-first words started 100-200 ms early, inside the silence before them, so captions, slams and SFX landed before the word | [AUTO] `transcribe.py` moves each start forward to the voice onset (first 10 ms frame within 24 dB of the word's peak, max 250 ms; raw time kept as `start_raw`). [CHECK] `verify_cut.py` on the render |
+| 4 | **A misplaced word.** Whisper put a word on the wrong moment (in a pause, or merged into the next phrase); the graphic timed to it landed on the wrong beat | [AUTO] low-confidence words in silences are flagged in `cutlist.md`. [CHECK] for every word a graphic or SFX is timed to, look at its waveform or play 1 s around it before building |
+| 5 | **Lopsided centred lines.** Lines centred on advance width (trailing space, punctuation, side bearings) looked off-centre | [CHECK] centre on ink: canvas `measureText` `actualBoundingBoxLeft/Right` (HyperFrames) or `measureText` (Remotion), then offset; stills with the guide on for every centred line |
+| 6 | **Glitch and slam clashing.** A glitch transition and an apex slam fired on the same beat; neither read | [CHECK] one transition effect per beat in the storyboard MOVES column; frame-step every beat that has two effects |
+| 7 | **Textures too strong.** Grain, dust and paper stacked (and grain on both footage and graphics); the texture was the first thing you saw and the encoder turned it into blocks | [CHECK] one or two textures, grain 2-4% at 1080p, grain on footage OR graphics; look at `qa/overview.png` at phone size. [AUTO] `qa.py` WARNs on the bitrate it costs |
+| 8 | **The silence was filled by long hit tails.** The music stopped dead but the impact SFX and its reverb rang through the gap | [AUTO] `qa.py --silence-at <t>`: the 0.5 s after the stop must sit 14 LU or more under the programme. Fix: shorter hits, fade the SFX before the stop, `--music-tail cut` |
+| 9 | **Loudness fell short** (final around -16 LUFS): the file was re-encoded after `finish.py`, or loudness was set before the music and SFX went in | [AUTO] `qa.py` FAILs outside +/-1 LU of the target. `finish.py` is always the LAST step; nothing re-encodes after it |
+| 10 | **Oversized file.** Grain at CRF 16-18 produced a huge upload that stalled | [AUTO] `qa.py` WARNs above 16 Mbps at 1080p (40 Mbps at 4K). `finish.py --crf 21-23`; the platform re-encodes anyway |
+| 11 | **Epidemic download workaround.** The agent tried to fetch Epidemic Sound tracks itself; they sit behind the user's login | [CHECK] the user downloads from their own account (site or app) into `work/music/` and `work/sfx/`; note track IDs in `EDIT_STATE.md`. Never scrape. The licence covers videos published while the subscription is active |
+| 12 | Text measured before its font loaded: fallback metrics, every fitted width wrong | [AUTO] HyperFrames starter waits on `document.fonts.load`; Remotion starter loads fonts in `delayRender` and logs `FONT MISSING`; `captions.py` WARNs on missing fonts |
+| 13 | Parts of a graphic waited on screen before the word that uses them (a chart frame with no data, an empty card) | [CHECK] each part has its own word in the storyboard; a still 0.2 s before each word shows nothing of that part |
+| 14 | A file found in the user's folders went into the edit without asking | [CHECK] list found files, ask, use only confirmed ones; record them in the Visual sources table |
+| 15 | A slam overshoot (112% for 0.18 s) pushed text outside the safe zone for a few frames | [AUTO] `safezone.py html` samples 10 times a second; the kinetic-reel `fitText()` reserves the overshoot |
+| 16 | A drop shadow or card border sat under the like/comment rail though the text itself was inside; and the old alpha audit joined a top title and a low caption into one box and reported a false rail overlap | [AUTO] `safezone.py alpha` now checks the rail per pixel and the edges on the bounding box; the Remotion starter reserves room for its shadows (14 px captions, 40 px cards) |
+| 17 | Composition frame rate differed from the source (30 vs 29.97): captions drifted about a frame every 33 s | [AUTO] `remotion_props.py` reads fps from the file; `probe.py` refuses VFR |
+| 18 | Captions wrapped to 3 lines in the narrow `cross` zone and spilled under the description | [AUTO] Remotion starter wraps with real glyph widths, shrinks to at most 2 lines and clamps the block; `captions.py --platform` WARNs on overflow |
+| 19 | A shutter (or any landing) SFX fired at the card's first frame, before it visibly landed | [CHECK] place the SFX with `"peak_at"` on the frame the card settles (spring settle, about 0.25-0.35 s after its start), checked on a still |
+| 20 | The safe-zone design guide was left on and rendered into a deliverable | [AUTO] Remotion starter defaults `showSafeZone` to false and `remotion_props.py` always writes false; HyperFrames guides are separate PNGs, never in the composition |

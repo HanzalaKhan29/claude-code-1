@@ -56,7 +56,9 @@ in/out, SFX and join into `EDIT_STATE.md` under "Listening note" and ask the use
 - [ ] Pacing arc: no two same-tempo scenes back to back; no repeated pattern
 - [ ] Tile strip across the timeline (contact sheet every 2 s): no palette drift, type tiers respected, one
       accent, 70/20/10 visual weight
-- [ ] Motion reels: 25-40% of words captioned (captions.py --selective prints the share), one accent, grain on
+- [ ] Kinetic-type reels (only if that is the chosen style): 25-40% of words captioned (captions.py --selective prints the share), one accent, texture only if the style card or preset asked for it
+- [ ] Deliberate dead stops: `qa.py --silence-at <t>` PASS (14 LU under the programme)
+- [ ] Remotion builds: `npx tsc -p .` clean, render log has no `FONT MISSING`, text-only render passes `safezone.py alpha`
 
 ## Truth
 - [ ] Every number, name, quote and claim on screen comes from the transcript or the user

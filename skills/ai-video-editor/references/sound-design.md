@@ -81,7 +81,9 @@ The user has a paid **Epidemic Sound** plan. Every project, ask which source to 
 - **Full stop on the beat.** Stopping the music dead on a beat makes that moment land harder:
   `finish.py --music-stop <time>`. By default the last 10 frames ring out as a ~3 s reverb tail (the "cinematic
   end" recipe: cut 10 frames before the end point, duplicate that tail, extend it about 4 s, reverb it, drop
-  about 5 dB to offset the overlap). `--music-tail cut` for a hard stop. Source: luvkilomedia (U6wVF2PMBUw)
+  about 5 dB to offset the overlap). `--music-tail cut` for a hard stop. A dead stop is only dead if nothing
+  rings through it: check with `qa.py <final> --silence-at <time>` when the voice pauses there too (the 0.5 s after must sit 14 LU or more
+  under the programme; long impact or reverb tails are the usual failure). Source: luvkilomedia (U6wVF2PMBUw)
   03:04-04:47; Abhay PS Rajawat (SWAYLiH7p5M) 05:29-05:37.
 - **Rotate the bed every 60-90 s.** The ear adapts to a track and stops hearing it; change track, tempo or
   energy at section boundaries. [creator rule, Abhay PS Rajawat 04:11-04:31]

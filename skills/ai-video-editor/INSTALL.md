@@ -19,6 +19,8 @@
 - "Break down the editing style of these 3 videos and write me a style card."
 - "Make a 6-second animated stat card: 'from 1,200 to 48,000 subscribers'. Look 20, transparent background."
 - "Make a 30-second motion-graphics reel like @metromedia.house from my voiceover `vo.mp3`. Storyboard it first."
+- "Calm explainer for LinkedIn, no texture, clean captions. Build the graphics in Remotion."
+- "Same edit, 3 hook variants for ads: one Remotion template, different props."
 - "Here's my channel <URL>. Find my top 10 edits and tell me what my style actually is."
 - "Grade `broll/` to match my talking-head footage and give me the look as a LUT."
 - "Edit this UGC ad into 12 hook variants; the avatar is AI, handle the disclosure."

@@ -37,7 +37,7 @@ def snap(segs, fps):
 
 def build_graph(segs, info, punch, center, fade_s, scale_to, index_offset=0, video=True, audio=True,
                 no_punch=frozenset()):
-    w, h = info["width"], info["height"]
+    w, h = info.get("width"), info.get("height")
     tw, th = scale_to
     parts, labels = [], []
     has_a = info.get("has_audio") and audio
@@ -85,6 +85,29 @@ def encode(src, graph, out, info, crf, preview, has_a):
         die("ffmpeg render failed (see log above)")
 
 
+def render_audio_only(edl, src, info, args):
+    """Cut an audio-only source (a voiceover for a motion reel, a podcast). Boundaries snap to 1 ms, every join
+    gets the same de-click fade, and the output codec follows the extension (.wav PCM, else AAC)."""
+    if not info.get("has_audio"):
+        die("source has neither video nor audio")
+    segs = snap(edl["segments"], 1000)
+    if not segs:
+        die("EDL has no segments")
+    graph = build_graph(segs, info, 0, (0.5, 0.5), args.fade_ms / 1000, (0, 0), video=False)
+    ext = os.path.splitext(args.out)[1].lower()
+    if ext in (".mp4", ".mov"):
+        print("NOTE: audio-only source, writing an audio-only file (no picture track).")
+    codec = ["-c:a", "pcm_s24le"] if ext == ".wav" else ["-c:a", "aac", "-b:a", "256k"]
+    os.makedirs(os.path.dirname(os.path.abspath(args.out)) or ".", exist_ok=True)
+    run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", src, "-filter_complex", graph, "-map", "[a]",
+         "-ar", "48000"] + codec + (["-movflags", "+faststart"] if ext in (".m4a", ".mp4", ".mov") else [])
+        + [args.out])
+    out_info = probe(args.out)
+    print(f"Rendered {args.out}: {out_info['duration']:.2f}s audio (EDL expected {edl['edited_duration']:.2f}s)")
+    if abs(out_info["duration"] - edl["edited_duration"]) > 0.1:
+        print("WARN: duration differs from the EDL by more than 0.1 s; re-time words_cut.json from the render.")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("edl")
@@ -105,7 +128,9 @@ def main():
     if os.path.abspath(args.out) == os.path.abspath(src):
         die("refusing to overwrite the source footage; pick a new output name (v1, v2, ...)")
     info = probe(src)
-    segs = snap(edl["segments"], info["fps"] or 30)
+    if not info.get("width"):  # voiceover / podcast audio: no picture to cut
+        return render_audio_only(edl, src, info, args)
+    segs = snap(edl["segments"], info.get("fps") or 30)
     if not segs:
         die("EDL has no segments")
     center = tuple(float(x) for x in args.punch_center.split(","))

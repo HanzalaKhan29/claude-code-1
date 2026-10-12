@@ -7,11 +7,14 @@ on the same beat, log the reason for every Drop, record the user's notes verbati
 Coverage: 0 of 0 rated
 
 ## Visual vocabulary
-| Option | Category | Spec (renderable values) | Rating | Brief / project | User note (verbatim) |
-|---|---|---|---|---|---|
-| Apex slam | type | Anton caps ~18% cap height, tl.set + 112%->100% 0.18 s expo.out | Maybe | | |
-| Ground rotation | transition | ink -> accent -> cream on the first word of each beat | Maybe | | |
-| Red-pen ellipse | annotation | SVG path draw-on 0.55 s power2.out, stroke ink | Maybe | | |
+Ratings are per style: a Keep in a kinetic-type reel is not a default for a talking-head edit. Offer an
+option only to projects whose style matches its Style column.
+
+| Option | Style | Category | Spec (renderable values) | Rating | Brief / project | User note (verbatim) |
+|---|---|---|---|---|---|---|
+| Apex slam | kinetic type | type | Anton caps ~18% cap height, tl.set + 112%->100% 0.18 s expo.out | Maybe | | |
+| Ground rotation | kinetic type | transition | ink -> accent -> cream on the first word of each beat | Maybe | | |
+| Red-pen ellipse | kinetic type / documentary | annotation | SVG path draw-on 0.55 s power2.out, stroke ink | Maybe | | |
 
 ## Sound library
 | Sound | Role (riser/impact/whoosh/pop/bed/texture) | Source + licence | Level used | Rating | Note |

@@ -1,20 +1,20 @@
-# AI Video Editor: Full Knowledge Base (v3)
+# AI Video Editor: Full Knowledge Base (v4)
 
-_Merged from SKILL.md + every references/*.md for external review. Templates and scripts excluded: this is the knowledge, not the runtime._
+_Merged from SKILL.md + every references/*.md + the opt-in presets, for external review. Templates and scripts excluded: this is the knowledge, not the runtime._
 
 
 # ===== FILE: SKILL.md =====
 
 ---
 name: ai-video-editor
-description: Professional AI video editor and motion designer that edits real footage with free tools (ffmpeg, Whisper, HyperFrames). Cuts talking-head videos (fillers, retakes, dead air), adds word-timed captions in 12 styles, builds motion-graphics reels (two-tier kinetic type), explainers and B-roll cards in HTML rendered to MP4, storyboards every video scene by scene for approval, grades colour, mixes sound to -14 LUFS, and reverse-engineers any creator's editing style by measuring their videos or their channel's top 10 edits. Use this skill whenever the user wants to edit a video, make a YouTube video or Short/Reel/TikTok, cut a podcast or talking head, add subtitles or captions, copy a creator's style, make a motion graphic, motion-graphics reel, explainer, animated title, lower third or kinetic text, storyboard a video, colour-grade footage, set up video editing, or give notes on an edit, even if they never say "skill" or name a tool.
+description: Professional AI video editor and motion designer that edits real footage with free tools (ffmpeg, Whisper, HyperFrames, Remotion). Cuts talking-head videos (fillers, retakes, dead air), adds word-timed captions in 12 styles, builds motion-graphics reels, explainers and B-roll cards with HyperFrames or Remotion in any style the references call for, storyboards every video scene by scene for approval, grades colour, mixes sound to -14 LUFS, and reverse-engineers any creator's style by measuring their videos or their channel's top 10 edits. Use this skill whenever the user wants to edit a video, make a YouTube video or Short/Reel/TikTok, cut a podcast or talking head, add subtitles or captions, copy a creator's style, make a motion graphic, motion-graphics reel, explainer, animated title, lower third or kinetic text, use Remotion or HyperFrames for video, storyboard a video, colour-grade footage, set up video editing, or give notes on an edit, even if they never say "skill" or name a tool.
 ---
 
 # AI Video Editor
 
 You are the user's editor, motion designer and director in one. You edit with code and free tools: no Premiere, no Final Cut, no paid APIs. The bar is "a viewer would not guess AI touched this".
 
-Built from: Luv Sankhla's AI Video Editor skill, the WeAreNoCode YouTube-editor workflow and its 20 Looks for Claude Motion, HeyGen's open-source HyperFrames skills (Apache-2.0), 513 published Claude Opus 5.5 video prompts, a frame-by-frame study of 12 reels from the user's four reference motion pages (metromedia.house, earn.edits, earnera.co, lightyear.residency), editor tutorials, and sourced research on typography, attention, motion, colour and sound. Details live in `references/`; this file is the workflow and the rules you need every time.
+Built from: Luv Sankhla's AI Video Editor skill, the WeAreNoCode YouTube-editor workflow and its 20 Looks for Claude Motion, HeyGen's open-source HyperFrames skills (Apache-2.0), 513 published Claude Opus 5.5 video prompts, a frame-by-frame study of 12 reels from four kinetic-type pages (one genre among many this skill covers), editor tutorials, and sourced research on typography, attention, motion, colour and sound. Details live in `references/`; this file is the workflow and the rules you need every time.
 
 ## The one rule that matters most
 
@@ -42,8 +42,8 @@ Paths below are relative to this skill's base directory (the host tells you wher
 |---|---|---|
 | Edit raw footage into a YouTube video or Short | **Full edit** (sections 2 to 7) | `references/editing-grammar.md` |
 | Only captions / subtitles on a finished video | **Captions** (2, 6, 7) | `references/captions.md` |
-| A motion-graphics reel (kinetic type, the four reference pages' style) | **Motion reel** (2, 5, 6, 7): the user's MAIN FOCUS | `references/motion-reels.md`, then `motion-graphics.md` |
-| A motion graphic, explainer, title, lower third, chart, promo (no footage, or inserts) | **Motion** (2, 5, 7) | `references/motion-graphics.md`, `references/looks-library.md` |
+| A motion-graphics reel (kinetic type, designed text over or instead of footage) | **Motion reel** (2, 3, 5, 6, 7) | the style card first; `references/motion-reels.md` only when the chosen style is kinetic type |
+| A motion graphic, explainer, title, lower third, chart, promo (no footage, or inserts) | **Motion** (2, 5, 7) | `references/motion-graphics.md`, `references/looks-library.md`; `references/remotion.md` when Remotion is the tool |
 | Colour-grade or match footage | **Grade** (section 7) | `references/color-grading.md` |
 | A paid ad, UGC ad, AI-avatar ad | **Ad** (full edit + ad rules) | `references/ugc-ads.md` |
 | "Edit like <creator>" / copy a style | **Style** (3, then the matching mode) | `references/style-reverse-engineering.md` |
@@ -59,7 +59,7 @@ Ask one question at a time and wait (use the AskUserQuestion tool when available
 1. **What is this video and who is it for?** (topic, audience, the one thing a viewer should feel or do)
 2. **Where is the footage?** (file path or folder; or "none" for pure motion graphics)
 3. **Format and length:** Short/Reel/TikTok 9:16, or long-form YouTube 16:9, or both? Target length?
-4. **Style:** "Give me 2-3 video links, OR a YouTube channel / Instagram page?" With a channel or page, you find and measure its top 10 edits yourself (section 3); the user never has to pick. Or a preset from `references/platforms-and-styles.md`, or one of the 20 Looks. With no preference for a reel, default to the motion-reels grammar (`references/motion-reels.md`), the user's main focus.
+4. **Style:** "Give me 2-3 video links, OR a YouTube channel / Instagram page?" With a channel or page, you find and measure its top 10 edits yourself (section 3b); the user never has to pick. Or a preset from `references/platforms-and-styles.md`, a preset file in `assets/presets/`, or one of the 20 Looks. With no preference, show 2-3 clearly different directions that fit the content (for example a clean talking-head preset, a Look, a kinetic-type preset) and let the user pick. Never fall back to one house style.
 5. **Subtitle style:** show the 12 styles (section 6) or "match the creator".
 6. **Language:** English, Hindi, Hinglish, other? (changes transcription model and fonts)
 7. **Never-list:** colours, music type, transitions, words, effects they never want.
@@ -69,9 +69,34 @@ Ask one question at a time and wait (use the AskUserQuestion tool when available
 
 Write the answers to `EDIT_STATE.md` as the brief.
 
+**Optional treatments: ask when relevant, never by default.** Once the style is chosen, ask only about the
+treatments that style could use, one short question with your recommendation: texture (grain, paper, dust,
+vignette, soft light), glow on display type, photo-moment treatment for the user's stills (full-frame push-in or
+bordered card, with a shutter sound), a music rise into a dead stop before the payoff, and SFX density (only on
+key moments, or on every visible change). A clean interview, a calm explainer or a brand film usually needs
+none of them: do not ask about texture for a style whose references show none. Record each answer in
+`EDIT_STATE.md`; a preset file the user picked answers them for you.
+
 **Fast path for a single graphic** (one stat card, title, lower third, no footage edit): ask only what changes the result: where the speaker's face sits in frame (so the graphic avoids it), brand colours or a Look, the frame rate of their footage, and the exact words/numbers. Then build, render, check, deliver. No storyboard approval round for one card.
 
-## 3. Learn the style by measuring, not by vibes
+## 3. Style is chosen per project, never assumed
+
+This skill edits in any style. The style comes from the user's references (measured below), a preset they
+pick, or a Look; a preset's rules apply only inside the project that chose it. Two kinds of rules:
+
+- **Universal (every video):** safe zones on 9:16; graphics land on their word; graphic and text work as one
+  unit (no empty gaps, no part of a graphic waiting on screen before the word that uses it); only what is
+  said; ask before using any file found in the user's folders; offer image prompts when visuals are missing;
+  the QA bar in section 7.
+- **Style-specific (only when the chosen style calls for it):** texture and glow, two-tier type blocks, text
+  stretched to a big word's width, photo moments, music dead stops, SFX on every change, apex slams, ground
+  rotations. These live in the style card or in a preset file (`assets/presets/`, for example
+  `kinetic-essay.md` for the metromedia-style kinetic essay).
+
+When the user teaches a rule during a project, ask whether it is universal or belongs to this style, and save
+it to the right place (`assets/learned-rules.md` for universal, the preset or style card for style rules).
+
+## 3b. Learn the style by measuring, not by vibes
 
 If the user named a creator, follow `references/style-reverse-engineering.md`. In short:
 
@@ -140,16 +165,23 @@ Rules for the plan (each one exists because breaking it costs viewers):
 - **Only what is said.** Never invent numbers, quotes, prices or results. Use the transcript's own words; mark anything illustrative.
 - **Density:** Shorts change something every 1.5 to 3 s; talking-head long-form every 3 to 8 s; documentary 4 to 12 s. Leave about 2 s of face between full-screen cutaways. Every interrupt must be related to the content: unrelated cuts lower memory for the message.
 - **Show, don't decorate:** a number becomes a chart or counter, a process becomes steps, a comparison becomes side-by-side, a product becomes its real UI. No generic stock "glowing brain" B-roll.
+- **Graphic and text are one unit.** No empty gaps between a graphic and its words, and no part of a graphic sitting on screen before the word that uses it: each part appears on its own word.
+- **Files you find are not files you may use.** Ask before using any image, clip or logo found in the user's folders; use only what they confirm.
 - Get the storyboard approved, then build. Review 3-4 still frames per scene before animating it.
 
-**How to build graphics:** HyperFrames turns HTML/CSS/GSAP into MP4. Read `references/motion-graphics.md` first. It covers:
+**Pick the tool per graphic** (say which and why in one line; full table in `references/remotion.md`):
+
+- **HyperFrames** (HTML/CSS/GSAP): single cards, titles, lower thirds, quick overlays, the `kinetic-reel` starter, HyperFrames' own workflows. No build step.
+- **Remotion** (React, every value a function of the frame): when you need control. Complex word-synced logic, layout from measured text, the whole edit in one timeline with many sequences, many variants from data, audio-reactive visuals, live preview with props. Starter: `assets/remotion/` plus `scripts/remotion_props.py`. If the user's Remotion plugin or skill is installed, load it for API detail. Remotion is free for individuals, companies of up to 3 employees and non-profits; bigger companies need a Company License (ask once).
+
+**How to build HyperFrames graphics:** read `references/motion-graphics.md` first. It covers:
 
 - installing HeyGen's official HyperFrames skills (`npx hyperframes skills update`), which own the composition contract. Prefer their `/talking-head-recut` workflow for designed cards over footage and `/motion-graphics` or `/faceless-explainer` for standalone pieces;
 - the motion doctrine (one continuous camera move, matched exit/entry vectors, no idle wobble, stillness before a climax);
 - the production-spec layer that makes code-animated video look premium (from 513 real prompts): duration, fps, palette, fonts, a locked copy list, a timestamped beat grid, easing tokens, a ban list, a deterministic `seek(t)` contract, and a frame-review gate;
 - how to pick a Look from `references/looks-library.md` (20 ready art directions with hex codes and fonts).
 
-Two ways to get graphics onto footage: put the edited video inside the composition (one render, best for heavy packaging), or render each graphic as a transparent `.mov` (`npx hyperframes render . --format mov`) and place it at its spoken word with `python3 scripts/overlay.py renders/v1.mp4 work/graphics.json renders/v2.mp4`. Tested starters (lint- and check-clean) live in `assets/hyperframes/`: `kinetic-reel/` (9:16 two-tier kinetic type, ground rotation, annotation, grain, end card: the main-focus genre), `lower-third/` and `stat-counter/` (transparent overlays). Check every rendered graphic with `python3 scripts/qa_graphic.py <file.mov>` (fully transparent first/last frame, no single-frame pops, legibility sheets over black/white/grey).
+Two ways to get graphics onto footage: put the edited video inside the composition (one render, best for heavy packaging), or render each graphic as a transparent `.mov` (`npx hyperframes render . --format mov`) and place it at its spoken word with `python3 scripts/overlay.py renders/v1.mp4 work/graphics.json renders/v2.mp4`. Tested starters live in `assets/hyperframes/` (lint- and check-clean): `kinetic-reel/` (9:16 two-tier kinetic type, for the kinetic-essay style only), `lower-third/` and `stat-counter/` (transparent overlays); and `assets/remotion/` (a neutral captioned edit with title, stat and photo graphics, every look a prop). Check every rendered graphic with `python3 scripts/qa_graphic.py <file.mov>` (fully transparent first/last frame, no single-frame pops, legibility sheets over black/white/grey).
 
 Render each graphic, then **look at frames** (`npx hyperframes snapshot <dir> --at <t>`), fix, and only then render final. Captions always go on last, above every graphic.
 
@@ -196,15 +228,15 @@ python3 scripts/finish.py renders/v3_captions.mp4 renders/v4_final.mp4 --platfor
 python3 scripts/qa.py renders/v4_final.mp4 --edl work/edl.json --captions work/captions_viral.ass --platform reels
 ```
 
-- **Colour first, if the footage needs it** (`references/color-grading.md`): match B-roll/AI shots to the A-roll (`grade.py --match`), preview a look (`grade.py in.mp4 --look warm --still 4`), apply it or a `.cube` LUT, grain 1-5% for the motion-reel register. Grade before captions.
+- **Colour first, if the footage needs it** (`references/color-grading.md`): match B-roll/AI shots to the A-roll (`grade.py --match`), preview a look (`grade.py in.mp4 --look warm --still 4`), apply it or a `.cube` LUT, and grain only if the chosen style uses texture. Grade before captions.
 - **Sound source:** the user chose Epidemic Sound or free sources at intake; note every file's source and licence in `EDIT_STATE.md` (`references/sound-design.md`).
 - Sound effects only where something visibly changes. Risers use `"end_at"` in `sfx.json` so they peak on the hit frame; repeated SFX are auto-varied a few percent; text pops sit 8-14 dB under impacts. Explainers: at most about one SFX per second, none on top of key words.
 - The bed is placed 20 LU under the **measured voice** (`--music-sep`), the duck follows the voice level, and SFX `db` values are relative to the voice peak, so a quiet narrator never ends up under the music. `--voice-chain full` adds a compressor and de-esser for uneven or harsh recordings.
 - Music bed 16-25 dB under the voice, ducked with 600 ms - 1 s recovery (`--duck`, default 700 ms), no vocals under speech, a change of track or energy every 60-90 s. Stop it dead before a reveal with `--music-stop <t>` (rings out as a short reverb tail; `--music-tail cut` for a hard stop).
 - **Closed Eye Test** before calling the sound done: if the cut is not engaging with eyes closed, fix voice, rhythm and gaps before any visual polish.
 - Deliver -14 LUFS integrated, -1 dBTP max (YouTube, Shorts, Reels, TikTok). `finish.py` does two-pass loudness normalisation and the platform encode (H.264 high, yuv420p, BT.709 tags, AAC 48 kHz, faststart).
-- `qa.py` must show no FAIL (it exits 1), and every WARN needs a written disposition. Then **look** at `qa/cuts.png`, `qa/captions.png`, `qa/overview.png` and, for 9:16, `qa/safezone_<platform>.png`, and write `qa/qa-look.md`.
-- **Safe zone, always, for 9:16** (the user's standing rule): every word, logo and graphic sits inside the platform's box and off the button rail. Instagram Reels: 220 px top, 420 px bottom, 1010 px wide, like/comment rail in the bottom-right corner. HyperFrames graphics: `python3 scripts/safezone.py html work/gfx/<dir> --platform reels` (exact, every visible text box, 10 samples per second). Transparent overlays: `safezone.py alpha <file.mov>`. Reference: `assets/safe-zones/`.
+- `qa.py` must show no FAIL (it exits 1), and every WARN needs a written disposition. If the edit has a deliberate dead stop, pass `--silence-at <t>`: the 0.5 s after it must sit 14 LU or more under the programme (a long SFX or reverb tail fails it). `qa.py` also WARNs on oversized files (heavy grain eats bitrate). Then **look** at `qa/cuts.png`, `qa/captions.png`, `qa/overview.png` and, for 9:16, `qa/safezone_<platform>.png`, and write `qa/qa-look.md`.
+- **Safe zone, always, for 9:16** (the user's standing rule): every word, logo and graphic sits inside the platform's box and off the button rail. Instagram Reels: 220 px top, 420 px bottom, 1010 px wide, like/comment rail in the bottom-right corner. HyperFrames graphics: `python3 scripts/safezone.py html work/gfx/<dir> --platform reels` (exact, every visible text box, 10 samples per second). Transparent overlays and Remotion text-only renders: `safezone.py alpha <file.mov>`. Reference: `assets/safe-zones/`.
 - Platform specs, safe zones, thumbnails and chapters: `references/platforms-and-styles.md`.
 
 ## 8. Review rounds and learning
@@ -222,7 +254,7 @@ Full, sourced versions: `references/design-science.md`. Short versions you shoul
 - **Type:** one font per tier, three tiers at most (whisper/body, apex/display, label/mono), each with a job. Track ALL CAPS +5 to +12%; tighten big display type -1 to -3%. No weight under 400 below 60 px at 1080p (thin strokes smear after YouTube compression). Use tabular numbers on counters.
 - **Colour:** exactly one accent hue, covering 10% of the frame or less. Text needs a luminance difference (stroke 2 to 4 px, soft shadow, or scrim), not just a different hue. Keep skin on the skin-tone line; run LUTs at 40 to 80%.
 - **Motion:** entrances decelerate (`cubic-bezier(0.16,1,0.3,1)`), exits accelerate and run about 20% faster, on-screen moves ease in-out. One hero moves at a time. Stagger 40 to 80 ms per item, total under 600 ms. Overshoot 0 to 3% for professional work, never elastic or bounce on text. No idle floating or breathing; if a scene runs out of things to do, add story, not wobble. Never more than 3 flashes per second.
-- **Default ban list** (allow only if the user asks): particles, glows, lens flares, shockwave rings, camera shake, bouncy easing, purple-blue "AI" gradients, glassmorphism everywhere, emoji as icons, gradient text, typewriter on long sentences, crossfades between scenes, spinning logos, generic stock B-roll, text parked in corners, flat screen recordings in reels (rebuild the UI as a tilted mockup), dead holds longer than 1 s (a still read-hold after a climax is not a dead hold: give the landed number or final line `words x 0.3 s + 0.5 s`).
+- **Default ban list** (allow only if the user asks, or the style card or preset they chose calls for it): particles, glows, lens flares, shockwave rings, camera shake, bouncy easing, purple-blue "AI" gradients, glassmorphism everywhere, emoji as icons, gradient text, typewriter on long sentences, crossfades between scenes, spinning logos, generic stock B-roll, text parked in corners, flat screen recordings in reels (rebuild the UI as a tilted mockup), dead holds longer than 1 s (a still read-hold after a climax is not a dead hold: give the landed number or final line `words x 0.3 s + 0.5 s`).
 
 ## 10. How to report back
 
@@ -235,7 +267,8 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | `references/toolkit-setup.md` | installing tools, Claude Desktop setup, troubleshooting renders |
 | `references/editing-grammar.md` | cutting, pacing gears and arc, first seconds, thumbnail handoff, B-roll timing, sound basics |
 | `references/captions.md` | caption styles, sizing, safe zones, Hindi, cinematic captions |
-| `references/motion-reels.md` | **main focus**: the measured motion-reels grammar (4 pages), kinetic-type toolkit, SaaS and documentary grammar, new Looks |
+| `references/motion-reels.md` | the kinetic-type reel genre (measured on 4 pages), kinetic-type toolkit, SaaS and documentary grammar, new Looks: read when the chosen style is kinetic type |
+| `references/remotion.md` | HyperFrames vs Remotion, Remotion in the pipeline, silent-failure rules, rendering, QA |
 | `references/motion-graphics.md` | any graphic or explainer: HyperFrames workflow, motion doctrine, prompt layer, techniques, templates |
 | `references/visual-sourcing.md` | where every picture comes from: cascade, licences, Higgsfield, prompt pack, not-found protocol |
 | `references/sound-design.md` | music/SFX sources, duck numbers, SFX craft, music stops, Closed Eye Test |
@@ -251,7 +284,9 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | `references/mistakes-and-fixes.md` | every mistake class found in an audit of this skill, by stage, with the automatic guard or the exact manual check |
 | `assets/style-card-template.md`, `assets/edit-state-template.md`, `assets/learned-rules.md` | style card to fill; project state file; rules learned from the user's notes |
 | `assets/storyboard-template.json`, `assets/style-lab.md` | the 7-field storyboard to fill; the persistent Keep/Maybe/Drop motion and sound vocabulary |
-| `assets/hyperframes/` | tested starters: kinetic-reel (9:16 genre reel, `data-platform` safe-zone stage, auto-fit text), lower-third, stat-counter |
+| `assets/hyperframes/` | tested starters: kinetic-reel (9:16 kinetic-type reel, `data-platform` safe-zone stage, auto-fit text), lower-third, stat-counter |
+| `assets/remotion/` | tested Remotion starter: captioned edit, title/stat/photo graphics on their words, safe-zone-aware layout, text-only QA render |
+| `assets/presets/` | opt-in style presets (e.g. `kinetic-essay.md`); a preset applies only to the project that picks it |
 | `assets/safe-zones/` | the user's Reels safe-zone reference image and transparent guide PNGs per platform |
 
 ## Scripts (all standard-library Python + ffmpeg; run with `--help` for options)
@@ -265,9 +300,9 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | `compare_refs.py` | consensus across measured references: CONSISTENT rules vs per-video choices, shared palette |
 | `storyboard.py` | validates the 7-field storyboard (contiguous, verbatim VO) and builds the approval page (HTML + MD) |
 | `grade.py` | colour: match B-roll to A-roll, 5 looks, LUT apply/export, glow, grain, before/after stills |
-| `transcribe.py` | word timestamps via mlx-whisper / faster-whisper / openai-whisper / HyperFrames, `--verbatim` keeps fillers |
+| `transcribe.py` | word timestamps via mlx-whisper / faster-whisper / openai-whisper / HyperFrames, `--verbatim` keeps fillers, GPU crash falls back to CPU, early word starts snapped to the voice onset |
 | `plan_cuts.py` | fillers, retakes (keeps last take), dead air, silence-snapped and frame-snapped cuts, `cutlist.md`, `words_cut.json` |
-| `render_cut.py` | renders the EDL, de-click fades, alternating punch-ins, single-pass audio (no drift) |
+| `render_cut.py` | renders the EDL (video or audio-only voiceover), de-click fades, alternating punch-ins, single-pass audio (no drift) |
 | `verify_cut.py` | second listening pass on the render: clipped/ghost words, drift |
 | `reframe.py` | 16:9 to 9:16 / 4:5 / 1:1, face-centred or blurred fit |
 | `overlay.py` | composites HyperFrames graphics (alpha MOV/WebM) or cutaways at their words |
@@ -275,7 +310,8 @@ After each stage: what you made (paths), what you checked and how (which frames,
 | `fetch_fonts.py` | downloads Google Fonts TTFs for captions and graphics |
 | `captions.py` | 12 caption styles (incl. kinetic two-tier and feed) as word-timed ASS + SRT, `--selective`, burn-in |
 | `finish.py` | voice clean-up, music bed with ducking, music stop + reverb tail, varied SFX, risers that end on the hit, two-pass -14 LUFS, platform encode |
-| `qa.py` | spec/loudness/black/freeze/flash/mono checks, cut, caption and safe-zone review sheets; exits 1 on FAIL |
+| `qa.py` | spec/loudness/black/freeze/flash/mono/file-size checks, dead-stop silence (`--silence-at`), cut, caption and safe-zone review sheets; exits 1 on FAIL |
+| `remotion_props.py` | builds the Remotion starter's `props.json` from the cut, words, key words and graphics; `--text-only` for the safe-zone QA render |
 | `safezone.py` | 9:16 safe zones: exact text-box audit of HyperFrames compositions, alpha audit of overlays, overlay sheets, design guides |
 
 
@@ -302,6 +338,8 @@ After each stage: what you made (paths), what you checked and how (which frames,
 - "Break down the editing style of these 3 videos and write me a style card."
 - "Make a 6-second animated stat card: 'from 1,200 to 48,000 subscribers'. Look 20, transparent background."
 - "Make a 30-second motion-graphics reel like @metromedia.house from my voiceover `vo.mp3`. Storyboard it first."
+- "Calm explainer for LinkedIn, no texture, clean captions. Build the graphics in Remotion."
+- "Same edit, 3 hook variants for ads: one Remotion template, different props."
 - "Here's my channel <URL>. Find my top 10 edits and tell me what my style actually is."
 - "Grade `broll/` to match my talking-head footage and give me the look as a LUT."
 - "Edit this UGC ad into 12 hook variants; the avatar is AI, handle the disclosure."
@@ -336,6 +374,7 @@ human or agent check, with the exact check to run. Read the section for the stag
 7. Colour and visual sourcing
 8. Ads, disclosure, licences
 9. What the AI cannot do at all
+10. Technical traps from real projects (20)
 
 ## 1. The meta-rules
 
@@ -515,17 +554,208 @@ It cannot hear (timbre, harshness, groove, whether a bed fits), cannot judge tas
 frame, and cannot prove a licence. Mitigation is structural: meter everything, keep the human checks (Closed
 Eye Test, phone-speaker listen, the 15-second promise stopwatch), and never let a meter PASS stand in for them.
 
+## 10. Technical traps from real projects
+
+Entries 1-11 happened on the user's kinetic-essay project; 12-20 were found building and testing v4 of this
+skill (Remotion starter, safe-zone audits). Each has the check that prevents it.
+
+| # | Mistake | Check that prevents it |
+|---|---|---|
+| 1 | **GPU transcription crash.** faster-whisper on a machine with a broken or missing cuDNN/cuBLAS aborted the whole process (no Python error to catch), so the job died instead of falling back | [AUTO] `transcribe.py --device auto` runs the GPU attempt in a child process; a crash prints WARN and reruns on CPU int8. Machines that crash every time: `--device cpu` |
+| 2 | **Audio-only cut failed.** A voiceover for a motion reel had no picture; `render_cut.py` crashed looking for a frame rate | [AUTO] audio-only sources render to `.wav` (PCM) or `.m4a` (AAC) with the same de-click fades; `probe.py` says "audio-only source" |
+| 3 | **Whisper's early word timings.** Phrase-first words started 100-200 ms early, inside the silence before them, so captions, slams and SFX landed before the word | [AUTO] `transcribe.py` moves each start forward to the voice onset (first 10 ms frame within 24 dB of the word's peak, max 250 ms; raw time kept as `start_raw`). [CHECK] `verify_cut.py` on the render |
+| 4 | **A misplaced word.** Whisper put a word on the wrong moment (in a pause, or merged into the next phrase); the graphic timed to it landed on the wrong beat | [AUTO] low-confidence words in silences are flagged in `cutlist.md`. [CHECK] for every word a graphic or SFX is timed to, look at its waveform or play 1 s around it before building |
+| 5 | **Lopsided centred lines.** Lines centred on advance width (trailing space, punctuation, side bearings) looked off-centre | [CHECK] centre on ink: canvas `measureText` `actualBoundingBoxLeft/Right` (HyperFrames) or `measureText` (Remotion), then offset; stills with the guide on for every centred line |
+| 6 | **Glitch and slam clashing.** A glitch transition and an apex slam fired on the same beat; neither read | [CHECK] one transition effect per beat in the storyboard MOVES column; frame-step every beat that has two effects |
+| 7 | **Textures too strong.** Grain, dust and paper stacked (and grain on both footage and graphics); the texture was the first thing you saw and the encoder turned it into blocks | [CHECK] one or two textures, grain 2-4% at 1080p, grain on footage OR graphics; look at `qa/overview.png` at phone size. [AUTO] `qa.py` WARNs on the bitrate it costs |
+| 8 | **The silence was filled by long hit tails.** The music stopped dead but the impact SFX and its reverb rang through the gap | [AUTO] `qa.py --silence-at <t>`: the 0.5 s after the stop must sit 14 LU or more under the programme. Fix: shorter hits, fade the SFX before the stop, `--music-tail cut` |
+| 9 | **Loudness fell short** (final around -16 LUFS): the file was re-encoded after `finish.py`, or loudness was set before the music and SFX went in | [AUTO] `qa.py` FAILs outside +/-1 LU of the target. `finish.py` is always the LAST step; nothing re-encodes after it |
+| 10 | **Oversized file.** Grain at CRF 16-18 produced a huge upload that stalled | [AUTO] `qa.py` WARNs above 16 Mbps at 1080p (40 Mbps at 4K). `finish.py --crf 21-23`; the platform re-encodes anyway |
+| 11 | **Epidemic download workaround.** The agent tried to fetch Epidemic Sound tracks itself; they sit behind the user's login | [CHECK] the user downloads from their own account (site or app) into `work/music/` and `work/sfx/`; note track IDs in `EDIT_STATE.md`. Never scrape. The licence covers videos published while the subscription is active |
+| 12 | Text measured before its font loaded: fallback metrics, every fitted width wrong | [AUTO] HyperFrames starter waits on `document.fonts.load`; Remotion starter loads fonts in `delayRender` and logs `FONT MISSING`; `captions.py` WARNs on missing fonts |
+| 13 | Parts of a graphic waited on screen before the word that uses them (a chart frame with no data, an empty card) | [CHECK] each part has its own word in the storyboard; a still 0.2 s before each word shows nothing of that part |
+| 14 | A file found in the user's folders went into the edit without asking | [CHECK] list found files, ask, use only confirmed ones; record them in the Visual sources table |
+| 15 | A slam overshoot (112% for 0.18 s) pushed text outside the safe zone for a few frames | [AUTO] `safezone.py html` samples 10 times a second; the kinetic-reel `fitText()` reserves the overshoot |
+| 16 | A drop shadow or card border sat under the like/comment rail though the text itself was inside; and the old alpha audit joined a top title and a low caption into one box and reported a false rail overlap | [AUTO] `safezone.py alpha` now checks the rail per pixel and the edges on the bounding box; the Remotion starter reserves room for its shadows (14 px captions, 40 px cards) |
+| 17 | Composition frame rate differed from the source (30 vs 29.97): captions drifted about a frame every 33 s | [AUTO] `remotion_props.py` reads fps from the file; `probe.py` refuses VFR |
+| 18 | Captions wrapped to 3 lines in the narrow `cross` zone and spilled under the description | [AUTO] Remotion starter wraps with real glyph widths, shrinks to at most 2 lines and clamps the block; `captions.py --platform` WARNs on overflow |
+| 19 | A shutter (or any landing) SFX fired at the card's first frame, before it visibly landed | [CHECK] place the SFX with `"peak_at"` on the frame the card settles (spring settle, about 0.25-0.35 s after its start), checked on a still |
+| 20 | The safe-zone design guide was left on and rendered into a deliverable | [AUTO] Remotion starter defaults `showSafeZone` to false and `remotion_props.py` always writes false; HyperFrames guides are separate PNGs, never in the composition |
+
+
+# ===== FILE: assets/presets/kinetic-essay.md =====
+
+# Preset: kinetic essay (metromedia-style)
+
+**Opt-in only.** Use this preset when the user picks it, names @metromedia.house or a similar kinetic-essay
+page as the reference, or approves it from the style options. It is one style among many: never apply it to a
+project that did not choose it, and never let it leak into another preset's defaults. Measured grammar behind
+it: `references/motion-reels.md`. Starters: `assets/hyperframes/kinetic-reel/` (HyperFrames) or
+`assets/remotion/` (Remotion, when the edit needs frame-level control).
+
+These rules came from the user's own project with this style. Inside this preset they are rules; outside it
+they are options to offer.
+
+## Look: never flat
+
+- Every frame carries texture: grain, paper, dust, vignette or soft light (pick one or two, not all). This
+  applies to storyboard frames too, so the approval page shows what will ship.
+- Glow on the big (apex) words. Full motion on every element: nothing static on screen.
+- Keep texture subtle: grain 2-4% at 1080p, vignette edges at most 35-45% dark. Check on a phone at full
+  brightness; if the texture is the first thing you notice, halve it. Grain goes on once (footage OR graphic
+  layer, never both).
+
+## Text blocks
+
+1. Small lines start at the big word's left edge, with tight spacing (line gap 0.1-0.2 of the small size).
+2. A small line at least 35% as wide as the big word stretches to match the big word's width (scale the font,
+   not the letter-spacing). Shorter lines stay at natural width, left-aligned to the big word.
+3. A line on its own is big, centred, and grows as each word is spoken (each new word adds to the line; the
+   line rescales to keep its width inside the safe box).
+4. Centred lines are centred on their INK, not their advance width: trailing spaces, punctuation and side
+   bearings make a line look lopsided. Measure with canvas `measureText` (`actualBoundingBoxLeft/Right`) or
+   Remotion `measureText`, then offset.
+
+## Layout
+
+- Instagram safe zone always: 220 px clear at the top, 420 px at the bottom, away from the right-side icons
+  (`--platform reels`; audit with `safezone.py`).
+- Graphic and text are one unit: no empty gaps between them, and no part of a graphic waits on screen before
+  the word that uses it. Each part appears on its word.
+
+## Visuals
+
+- Ask before using any file found in the user's folders (it may be private or unlicensed for this use).
+- The user's stills become photo moments: a full-frame push-in, or a bordered card, each with a shutter
+  sound on the frame it lands.
+- Missing visuals: offer image prompts (`work/prompt-pack.md`) instead of a stock filler.
+
+## Sound
+
+- The music rises into the climax and stops dead (`finish.py --music-stop <t> --music-tail cut`).
+- The silence after the stop measures at least 14 LU below the programme: `qa.py <final> --silence-at <t>`
+  must PASS. Long hit or reverb tails are the usual reason it fails: trim or fade them before the stop.
+- A sound effect on every visible change (word slam, ground change, card land, shutter). Vary repeats
+  (`finish.py` does), keep pops 8-14 dB under impacts.
+
+## Checks that belong to this preset
+
+| Check | How |
+|---|---|
+| Safe zone | `safezone.py html <dir> --platform reels` (HyperFrames) or `safezone.py alpha qa.mov` (Remotion) |
+| Dead stop is silent | `qa.py final.mp4 --silence-at <stop time>` |
+| Texture not too strong | look at `qa/overview.png` at phone size; grain should vanish at arm's length |
+| Lines centred on ink | stills of every centred line, guide on |
+| Glitch and slam never on the same beat | storyboard MOVES column: one transition effect per beat |
+
+
+# ===== FILE: references/remotion.md =====
+
+# Remotion: when to use it, how to build with it, how to check it
+
+Remotion renders React components to video, one frame at a time: every pixel is a function of
+`useCurrentFrame()`. That is why it gives more control than HyperFrames: any value (position, size, colour,
+which word is lit, how far a counter has run) is plain code you compute per frame, with types, components and
+data. The price is a heavier setup (Node project, ~250 npm packages, React) and slower renders.
+
+If the user's Remotion plugin or skill is installed (for example Remotion's official agent skills), load it
+for API details. This file owns the editing workflow around Remotion: tool choice, safe zones, timing from the
+transcript, QA and the hand-off to `finish.py`.
+
+## 1. HyperFrames or Remotion (decide per graphic, say which and why)
+
+| Need | Pick | Why |
+|---|---|---|
+| One card, lower third, title, quick overlay | HyperFrames | plain HTML/CSS/GSAP, no build step, transparent MOV in one command |
+| The `kinetic-reel` starter, HyperFrames' own `/talking-head-recut`, `/embedded-captions`, `/faceless-explainer` | HyperFrames | those workflows already exist and are tested |
+| Exact frame-level control: values computed in code per frame, complex word-synced logic, layout from measured text | **Remotion** | everything is a function of the frame; `measureText` / `fitText` give real glyph widths |
+| The whole edit in one timeline (footage + graphics + captions + photo moments) with many sequences | **Remotion** | `<Sequence>` per element, `<OffthreadVideo>` frame-exact, one render |
+| Many variants from data (ad hooks, 10 language versions, a weekly series template) | **Remotion** | one component, different `props.json` per render; scales to Remotion Lambda |
+| Audio-reactive visuals (waveforms, bars on the voice) | **Remotion** | `@remotion/media-utils` `visualizeAudio` per frame |
+| Live preview with editable props for the user | **Remotion** | `npx remotion studio` |
+| The user is a company with 4+ employees and has no Remotion Company License | HyperFrames | Remotion's free licence covers individuals, for-profit organisations up to 3 employees and non-profits; bigger companies need a Company License (remotion.pro). Ask once and note it in EDIT_STATE.md |
+
+Both tools can be in one project: HyperFrames for a quick card, Remotion for the main timeline. Pick one per
+element and keep the same safe zone, fonts and accent across both.
+
+## 2. Where Remotion sits in the pipeline
+
+1. Rough cut (`render_cut.py`), then grade (`grade.py`). The cut is locked before Remotion starts.
+2. Remotion replaces steps 3 and 4 (graphics and captions): the composition takes the graded cut through
+   `<OffthreadVideo>`, draws graphics on their words and captions on top, in one render. Or it renders only a
+   transparent overlay that `overlay.py` places (use this when the cut may still change).
+3. `finish.py` on the Remotion output: music, SFX, ducking, two-pass loudness, platform encode. Do not mix the
+   final sound inside Remotion: the skill's loudness, ducking and dead-stop checks live in `finish.py` and `qa.py`.
+4. `qa.py` on the final, `safezone.py alpha` on the text-only render.
+
+## 3. Start from the starter
+
+`assets/remotion/` (tested, see its README): captions grouped like `captions.py`, wrapped with real glyph
+widths and kept inside the platform zone, `title` / `stat` / `image` graphics that start on their word.
+`scripts/remotion_props.py` builds `props.json` from the cut, `words_cut.json`, key words and a graphics list,
+and copies media into `public/`. Every style choice is a prop: fonts, size, colour, accent, highlight rule,
+words per group, position, texture. Fill them from the style card, never from a default look.
+
+## 4. Rules that fail silently if broken
+
+- **Pure function of the frame.** Animate with `interpolate`, `spring`, `Easing`; random with `random(seed)`.
+  No `Math.random()`, `Date.now()`, `setTimeout`, CSS transitions or keyframes: Remotion renders frames in
+  parallel and out of order, so anything stateful flickers or desyncs.
+- **Async loads are gated.** Fonts, JSON and measured images load inside `delayRender()` /
+  `continueRender()`. A font that is not loaded renders with a fallback and every measured width is wrong.
+  Read the render log for `FONT MISSING`.
+- **Footage through `<OffthreadVideo>`** (frame-exact extraction), assets through `staticFile()` from
+  `public/`. A remote URL in a render is a network dependency that can fail mid-render.
+- **Composition fps = source fps.** A 29.97 source in a 30 fps composition drifts about 1 frame per 33 s
+  against the words. `remotion_props.py` reads the fps from the file.
+- **Duration from data.** `calculateMetadata` sets `durationInFrames` from the cut's duration (or the last
+  word); a hard-coded duration cuts the ending or leaves black.
+- **Sizes from the zone.** Every text block computes its width from `centredWidthAt(zone, ...)` for the band
+  it occupies, and its height from its line count. Never place text at fixed pixels on 9:16.
+- **Shadows and borders are part of the graphic.** The safe-zone audit counts every visible pixel, including a
+  drop shadow under the like button. Reserve the shadow's reach in the layout (the starter does: 14 px for
+  caption shadows, 40 px for card shadows).
+- **Never ship the guide.** `showSafeZone` is a design aid in Studio; default it to false.
+
+## 5. Rendering
+
+```bash
+npx remotion render src/index.ts Edit out/edit.mp4 --props=props.json --crf=18          # H.264 with the cut's audio
+npx remotion render src/index.ts Edit out/qa.mov --props=props_qa.json --codec=prores --prores-profile=4444 \
+    --image-format=png --pixel-format=yuva444p10le                                    # transparent, for QA / overlay
+npx remotion render ... --frames=0-89                                                 # first 3 s only, fast check
+npx remotion still src/index.ts Edit out/f120.png --props=props.json --frame=120       # one frame to look at
+```
+
+- Remotion downloads its own Chrome Headless Shell on the first render. Offline or in a sandbox, pass
+  `--browser-executable=<path to chrome-headless-shell>`.
+- Speed: measured here, 19 s of 1080x1920 took about 2 minutes at concurrency 2. Check single frames with
+  `remotion still` while designing; render the full video once the stills are right.
+- Transparent output: ProRes 4444 `.mov` (above) or VP9 WebM (`--codec=vp9 --image-format=png
+  --pixel-format=yuva420p`). H.264 has no alpha.
+
+## 6. QA (same bar as everything else)
+
+1. `npx tsc -p .` clean (the starter ships `tsconfig.json`).
+2. Stills at every graphic's first frame, middle and exit; look at each.
+3. 9:16: text-only render, then `safezone.py alpha out/qa.mov --platform <zone>` must PASS. Rendering one zone's
+   layout and auditing it against another zone fails, as it should.
+4. Frames from the final MP4 (not Studio screenshots) for `qa.py`; the render log has no `FONT MISSING`.
+5. The rest of `references/qa-checklist.md` as for any edit.
+
 
 # ===== FILE: references/motion-reels.md =====
 
-# Motion-graphics reels: the genre grammar (main focus)
+# Motion-graphics reels: the kinetic-type genre
 
-The user's main focus is motion-graphics reels like **@metromedia.house, @earn.edits, @earnera.co and
-@lightyear.residency**. When a brief says reel, Short, explainer or "edit like these pages" and nothing says
-otherwise, default to this grammar. Every number here was measured frame by frame on 12 of their reels
-(downloaded 2026-10-12, text heights in pixels, colours as saturated-pixel medians). Audio on those reels was
-not analysed, so every audio claim about them is unverified. Their posts were ranked by likes (Instagram hides
-views): never call them "most viewed".
+One genre family among the many this skill edits: kinetic-type reels like **@metromedia.house, @earn.edits,
+@earnera.co and @lightyear.residency**. Use this file when the chosen style is kinetic type (the user picked
+it, named one of these pages, or approved it from the style options). Do not default to it: a reel can just as
+well be a clean talking head, a documentary cut or a UGC ad. The opt-in rule set from the user's own project in
+this genre is `assets/presets/kinetic-essay.md`. Every number here was measured frame by frame on 12 of these
+reels (downloaded 2026-10-12, text heights in pixels, colours as saturated-pixel medians). Audio on those reels
+was not analysed, so every audio claim about them is unverified. Their posts were ranked by likes (Instagram
+hides views): never call them "most viewed".
 
 Reading key: **[MEASURED]** frame-measured on the reels; **[SECONDARY]** code/docs, not video;
 **[UNVERIFIED]** not confirmed.
@@ -741,7 +971,7 @@ Contents: 1 Tool choice · 2 Install HyperFrames + official skills · 3 Two ways
 
 Sources: HeyGen HyperFrames official skills (Apache-2.0: `hyperframes`, `hyperframes-core`, `talking-head-recut`, `motion-doctrine`, `cut-the-curve`, `seam-craft`), the 513-prompt Opus 5.5 study (`motion-prompt-research.md`), WeAreNoCode Looks (`looks-library.md`), `design-science.md`.
 
-**Making a motion-graphics REEL** (the user's main focus: metromedia / earn.edits / earnera / lightyear style)? Read `motion-reels.md` first: it holds the measured genre grammar, and `assets/hyperframes/kinetic-reel/` is the tested starter. This file is the general HyperFrames craft underneath it.
+**Making a kinetic-type reel** (the style the user chose is kinetic type, e.g. metromedia / earn.edits / earnera / lightyear)? Read `motion-reels.md` first; `assets/hyperframes/kinetic-reel/` is the tested starter. For any other style, this file is the general craft. **Remotion** instead of HyperFrames: `remotion.md`.
 
 ## 1. Tool choice
 
@@ -750,7 +980,7 @@ Sources: HeyGen HyperFrames official skills (Apache-2.0: `hyperframes`, `hyperfr
 | Any designed graphic, card, title, chart, explainer, kinetic text | **HyperFrames** (`npx hyperframes`) | Plain HTML/CSS/GSAP, no build step, made for agents: `lint`, `check`, `snapshot` contact sheets, transparent MOV/WebM output, a 446-item registry of captions, lower-thirds and transitions |
 | Plain word captions on footage | `scripts/captions.py` (libass) | Seconds to render; HyperFrames captions only when you need web-only looks |
 | Simple punch-ins, crops, reframes | ffmpeg (`render_cut.py --punch`, `reframe.py`) | No browser render needed |
-| The user already has a Remotion brand kit | Remotion | Respect existing work; Remotion needs a paid license for companies of 4+ people |
+| Frame-level control in code, the whole edit in one timeline, data-driven variants, audio-reactive visuals, or an existing Remotion brand kit | **Remotion** (`assets/remotion/`, `remotion.md`) | Every value is a function of the frame; React components and props. Free for individuals, companies up to 3 employees and non-profits; bigger companies need a Company License |
 
 ## 2. Install HyperFrames and its official skills
 
@@ -1609,7 +1839,9 @@ The user has a paid **Epidemic Sound** plan. Every project, ask which source to 
 - **Full stop on the beat.** Stopping the music dead on a beat makes that moment land harder:
   `finish.py --music-stop <time>`. By default the last 10 frames ring out as a ~3 s reverb tail (the "cinematic
   end" recipe: cut 10 frames before the end point, duplicate that tail, extend it about 4 s, reverb it, drop
-  about 5 dB to offset the overlap). `--music-tail cut` for a hard stop. Source: luvkilomedia (U6wVF2PMBUw)
+  about 5 dB to offset the overlap). `--music-tail cut` for a hard stop. A dead stop is only dead if nothing
+  rings through it: check with `qa.py <final> --silence-at <time>` when the voice pauses there too (the 0.5 s after must sit 14 LU or more
+  under the programme; long impact or reverb tails are the usual failure). Source: luvkilomedia (U6wVF2PMBUw)
   03:04-04:47; Abhay PS Rajawat (SWAYLiH7p5M) 05:29-05:37.
 - **Rotate the bed every 60-90 s.** The ear adapts to a track and stops hearing it; change track, tempo or
   energy at section boundaries. [creator rule, Abhay PS Rajawat 04:11-04:31]
@@ -4594,6 +4826,7 @@ Install only what is missing, after the user says yes. One line of "why" per too
 | Node.js 22+ | HyperFrames | `brew install node@22` | `winget install OpenJS.NodeJS.LTS` | nvm: `nvm install 22` |
 | HyperFrames | HTML to video motion graphics | `npx hyperframes@latest doctor`, then `npx hyperframes browser ensure` | same | same |
 | HyperFrames skills | official composition workflows | `npx hyperframes skills update` | same | same |
+| Remotion (optional, per project) | React motion graphics with frame-level control | `cp -r assets/remotion <project>/work/remotion && cd <project>/work/remotion && npm install` (no global install; first render downloads Chrome Headless Shell) | same | same |
 | Transcription (one is enough) | word timestamps | `python3 -m pip install mlx-whisper` (Apple Silicon, fastest) | `python -m pip install faster-whisper` | `python3 -m pip install faster-whisper` |
 | yt-dlp (optional) | download reference videos | `brew install yt-dlp` | `winget install yt-dlp.yt-dlp` | `python3 -m pip install -U yt-dlp` |
 | opencv-python (optional) | face share in style analysis, face-centred reframe | `python3 -m pip install opencv-python` | same with `python` | same |
@@ -4602,6 +4835,8 @@ Install only what is missing, after the user says yes. One line of "why" per too
 
 Notes:
 - Homebrew ffmpeg: check filters with `ffmpeg -hide_banner -filters | grep -E " (subtitles|ass|drawtext|zoompan|sidechaincompress|loudnorm) "`. If `subtitles` is missing, `brew install ffmpeg-full` (or the tap that bundles libass).
+- Transcription on a GPU machine with a broken CUDA/cuDNN install: `transcribe.py` tries the GPU in a child process and falls back to CPU int8 on a crash. Pass `--device cpu` to skip the attempt.
+- Remotion licence: free for individuals, for-profit companies with up to 3 employees and non-profits; larger companies need a Company License (remotion.pro). HyperFrames is Apache-2.0.
 - Whisper models download on first use (hundreds of MB from Hugging Face). Corporate networks may block it; `transcribe.py` then falls back to `npx hyperframes transcribe` and finally reports every engine's error.
 - Model choice: `large-v3-turbo` for most work; `small` for quick drafts; `large-v3` for Hindi and accented speech. Parakeet (via `npx hyperframes transcribe -e parakeet` or `parakeet-mlx`) is very fast and accurate for English and European languages but has no Hindi.
 - auto-editor is optional. Note that PyPI ships 29.x while GitHub releases are 31.x with different flags (`--when-silent` vs `--when-inactive`); there is no `--export json` (use `--export v3`). This skill's `plan_cuts.py` does transcript-aware cutting without it.
@@ -4694,7 +4929,9 @@ in/out, SFX and join into `EDIT_STATE.md` under "Listening note" and ask the use
 - [ ] Pacing arc: no two same-tempo scenes back to back; no repeated pattern
 - [ ] Tile strip across the timeline (contact sheet every 2 s): no palette drift, type tiers respected, one
       accent, 70/20/10 visual weight
-- [ ] Motion reels: 25-40% of words captioned (captions.py --selective prints the share), one accent, grain on
+- [ ] Kinetic-type reels (only if that is the chosen style): 25-40% of words captioned (captions.py --selective prints the share), one accent, texture only if the style card or preset asked for it
+- [ ] Deliberate dead stops: `qa.py --silence-at <t>` PASS (14 LU under the programme)
+- [ ] Remotion builds: `npx tsc -p .` clean, render log has no `FONT MISSING`, text-only render passes `safezone.py alpha`
 
 ## Truth
 - [ ] Every number, name, quote and claim on screen comes from the transcript or the user

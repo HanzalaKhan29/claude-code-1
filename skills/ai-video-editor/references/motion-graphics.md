@@ -4,7 +4,7 @@ Contents: 1 Tool choice · 2 Install HyperFrames + official skills · 3 Two ways
 
 Sources: HeyGen HyperFrames official skills (Apache-2.0: `hyperframes`, `hyperframes-core`, `talking-head-recut`, `motion-doctrine`, `cut-the-curve`, `seam-craft`), the 513-prompt Opus 5.5 study (`motion-prompt-research.md`), WeAreNoCode Looks (`looks-library.md`), `design-science.md`.
 
-**Making a motion-graphics REEL** (the user's main focus: metromedia / earn.edits / earnera / lightyear style)? Read `motion-reels.md` first: it holds the measured genre grammar, and `assets/hyperframes/kinetic-reel/` is the tested starter. This file is the general HyperFrames craft underneath it.
+**Making a kinetic-type reel** (the style the user chose is kinetic type, e.g. metromedia / earn.edits / earnera / lightyear)? Read `motion-reels.md` first; `assets/hyperframes/kinetic-reel/` is the tested starter. For any other style, this file is the general craft. **Remotion** instead of HyperFrames: `remotion.md`.
 
 ## 1. Tool choice
 
@@ -13,7 +13,7 @@ Sources: HeyGen HyperFrames official skills (Apache-2.0: `hyperframes`, `hyperfr
 | Any designed graphic, card, title, chart, explainer, kinetic text | **HyperFrames** (`npx hyperframes`) | Plain HTML/CSS/GSAP, no build step, made for agents: `lint`, `check`, `snapshot` contact sheets, transparent MOV/WebM output, a 446-item registry of captions, lower-thirds and transitions |
 | Plain word captions on footage | `scripts/captions.py` (libass) | Seconds to render; HyperFrames captions only when you need web-only looks |
 | Simple punch-ins, crops, reframes | ffmpeg (`render_cut.py --punch`, `reframe.py`) | No browser render needed |
-| The user already has a Remotion brand kit | Remotion | Respect existing work; Remotion needs a paid license for companies of 4+ people |
+| Frame-level control in code, the whole edit in one timeline, data-driven variants, audio-reactive visuals, or an existing Remotion brand kit | **Remotion** (`assets/remotion/`, `remotion.md`) | Every value is a function of the frame; React components and props. Free for individuals, companies up to 3 employees and non-profits; bigger companies need a Company License |
 
 ## 2. Install HyperFrames and its official skills
 

@@ -161,26 +161,38 @@ def audit_alpha(args):
     if not raw:
         die("could not read an alpha channel (is this a transparent MOV/WebM? MP4 has no alpha)")
     fsz = sw * sh
-    hits = []
+    sx, sy = W / sw, H / sh
+    # The rail is checked per PIXEL, the box edges on the bounding box. A union box would wrongly join a wide
+    # title at the top with a caption low down and call the pair a rail overlap.
+    rails = [(int(rx0 / sx), int(ry0 / sy), int(rx1 / sx) + 1, int(ry1 / sy) + 1) for rx0, ry0, rx1, ry1 in zone["rails"]]
+    edge_zone = dict(zone, rails=[])
+    hits, rail_fails = [], []
     for k in range(len(raw) // fsz):
         fr = raw[k * fsz:(k + 1) * fsz]
-        xs = [i % sw for i in range(fsz) if fr[i] > 40]
-        if not xs:
+        on = [i for i in range(fsz) if fr[i] > 40]
+        if not on:
             continue
-        ys = [i // sw for i in range(fsz) if fr[i] > 40]
-        sx, sy = W / sw, H / sh
+        xs, ys = [i % sw for i in on], [i // sw for i in on]
         rect = (min(xs) * sx, min(ys) * sy, (max(xs) + 1) * sx, (max(ys) + 1) * sy)
         hits.append((round(k / 4, 2), "graphic pixels", rect))
+        for (a, b, c, d), (rx0, ry0, _, _) in zip(rails, zone["rails"]):
+            n = sum(1 for x, y in zip(xs, ys) if a <= x < c and b <= y < d)
+            if n >= 2:  # one stray anti-aliased pixel is not a graphic under the buttons
+                rail_fails.append((round(k / 4, 2), "graphic pixels", f"overlaps the button rail (x>{rx0:.0f}, "
+                                   f"y>{ry0:.0f}): {n} px at preview scale"))
     if not hits:
         die("graphic is fully transparent in every sampled frame")
-    return report(zone, hits, f"{len(raw) // fsz} frames at 4 fps")
+    return report(edge_zone, hits, f"{len(raw) // fsz} frames at 4 fps", extra=rail_fails, shown=zone)
 
 
-def report(zone, items, what):
+def report(zone, items, what, extra=(), shown=None):
     fails = []
     for t, text, rect in items:
         for v in zone_violations(rect, zone):
             fails.append(f"t={t:>6.2f}s  '{text}'  {v}")
+    fails += [f"t={t:>6.2f}s  '{text}'  {v}" for t, text, v in extra]
+    fails.sort(key=lambda f: float(f.split("s", 1)[0].split("=")[1]))
+    zone = shown or zone
     seen, uniq = set(), []
     for f in fails:
         key = f.split("  ", 1)[1]

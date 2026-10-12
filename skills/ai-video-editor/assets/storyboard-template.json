@@ -1,29 +1,41 @@
 {
-  "_how": "Copy to work/storyboard.json. One scene per beat, contiguous times covering the whole edited timeline (seconds, edited timeline). vo = verbatim words from words_cut.json (empty string for no voice). image = a HyperFrames snapshot or extracted frame (optional but strongly preferred). Delete this _how line or leave it; it is ignored.",
-  "title": "Ten frames, two looks",
-  "intro": "What the frames show and the motion language of the final film, in 2 to 4 sentences. Name the reference reel being emulated, e.g. kinetic two-tier type over phone-selfie footage like @creator.",
-  "options": [
-    {"name": "Option A", "note": "ink #0E0F0E ground, lime #DDF53D accent, Anton apex + Instrument Serif italic whisper, punchy", "selected": true},
-    {"name": "Option B", "note": "cream #F1EEE6 paper ground, red-pen annotations, serif display, calm documentary", "selected": false}
-  ],
-  "scenes": [
-    {
-      "n": 1, "start": 0.0, "end": 3.0,
-      "beat": "hook",
-      "tag": "UI mockup first",
-      "visual": "Rebuilt Google search bar tilted 12 degrees in perspective, typewriter cursor types the query; slow push-in.",
-      "image": "",
-      "vo": "",
-      "moves": "Search bar slams in from 115% scale on frame 1. Query types in hard steps; the last word pops lime on the beat."
-    },
-    {
-      "n": 2, "start": 3.0, "end": 5.0,
-      "beat": "on camera",
-      "tag": "You, to camera",
-      "visual": "Hard-cut phone-selfie framing, face filling frame; serif-italic key phrase 'a whole cast' builds under the chin.",
-      "image": "",
-      "vo": "But inside Google Flow, it can build you a whole cast.",
-      "moves": "Hard cut to you, phone selfie framing like the reference reel. Serif word 'cast' builds under your chin on the word."
-    }
-  ]
+ "_how": "Copy to work/storyboard.json. One scene per beat, contiguous times covering the whole edited timeline (seconds, edited timeline). vo = verbatim words from words_cut.json (empty string for no voice). image = a HyperFrames snapshot or extracted frame (optional but strongly preferred). Delete this _how line or leave it; it is ignored. EVERY value below is an example from one kinetic-type project: replace the options, tags, visuals and moves with the style this project chose. Options must be genuinely different directions, not two shades of one house style.",
+ "title": "Ten frames, two looks",
+ "intro": "What the frames show and the motion language of the final film, in 2 to 4 sentences. Name the reference being emulated (whatever the user chose: a creator, a preset, a Look).",
+ "options": [
+  {
+   "name": "Option A",
+   "note": "ink #0E0F0E ground, lime #DDF53D accent, Anton apex + Instrument Serif italic whisper, punchy",
+   "selected": true
+  },
+  {
+   "name": "Option B",
+   "note": "contrast option, e.g. clean talking head: natural cuts, minimal sentence-case captions, no texture, one calm card per idea",
+   "selected": false
+  }
+ ],
+ "scenes": [
+  {
+   "n": 1,
+   "start": 0.0,
+   "end": 3.0,
+   "beat": "hook",
+   "tag": "UI mockup first",
+   "visual": "Rebuilt Google search bar tilted 12 degrees in perspective, typewriter cursor types the query; slow push-in.",
+   "image": "",
+   "vo": "",
+   "moves": "Search bar slams in from 115% scale on frame 1. Query types in hard steps; the last word pops lime on the beat."
+  },
+  {
+   "n": 2,
+   "start": 3.0,
+   "end": 5.0,
+   "beat": "on camera",
+   "tag": "You, to camera",
+   "visual": "Hard-cut phone-selfie framing, face filling frame; serif-italic key phrase 'a whole cast' builds under the chin.",
+   "image": "",
+   "vo": "But inside Google Flow, it can build you a whole cast.",
+   "moves": "Hard cut to you, phone selfie framing like the reference reel. Serif word 'cast' builds under your chin on the word."
+  }
+ ]
 }

@@ -41,7 +41,8 @@ def main():
 
     info = probe(args.video)
     if not info["has_video"]:
-        print("No video stream found.")
+        print("Audio-only source (voiceover/podcast): the cut works (render_cut.py writes .wav or .m4a); "
+              "no picture checks.")
     warnings = []
     if info.get("has_audio"):
         info["loudness"] = loudness(args.video)
@@ -84,15 +85,20 @@ def main():
     info["warnings"] = warnings
     write_json(info, os.path.join(out, "probe.json"))
 
-    print(f"{os.path.basename(args.video)}: {info.get('width')}x{info.get('height')} @ {info.get('fps')} fps, "
-          f"{info['duration']:.1f}s, {info.get('orientation')}, video={info.get('vcodec')} audio={info.get('acodec')}")
+    if info["has_video"]:
+        print(f"{os.path.basename(args.video)}: {info.get('width')}x{info.get('height')} @ {info.get('fps')} fps, "
+              f"{info['duration']:.1f}s, {info.get('orientation')}, video={info.get('vcodec')} "
+              f"audio={info.get('acodec')}")
+    else:
+        print(f"{os.path.basename(args.video)}: audio only, {info['duration']:.1f}s, {info.get('acodec')}, "
+              f"{info.get('channels')} ch, {info.get('sample_rate')} Hz")
     if "loudness" in info:
         L = info["loudness"]
         print(f"Loudness: {L.get('integrated_lufs')} LUFS, peak {L.get('true_peak_dbtp')} dBTP, "
               f"dead air (>0.5s): {info['dead_air_seconds']}s across {len(info['silences_over_0_5s'])} gaps")
     for w in warnings:
         print("WARN:", w)
-    print(f"Wrote {out}/probe.json and contact.png (look at the contact sheet).")
+    print(f"Wrote {out}/probe.json" + (" and contact.png (look at the contact sheet)." if info["has_video"] else "."))
 
 
 if __name__ == "__main__":

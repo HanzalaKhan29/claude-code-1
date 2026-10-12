@@ -1,11 +1,13 @@
-# Motion-graphics reels: the genre grammar (main focus)
+# Motion-graphics reels: the kinetic-type genre
 
-The user's main focus is motion-graphics reels like **@metromedia.house, @earn.edits, @earnera.co and
-@lightyear.residency**. When a brief says reel, Short, explainer or "edit like these pages" and nothing says
-otherwise, default to this grammar. Every number here was measured frame by frame on 12 of their reels
-(downloaded 2026-10-12, text heights in pixels, colours as saturated-pixel medians). Audio on those reels was
-not analysed, so every audio claim about them is unverified. Their posts were ranked by likes (Instagram hides
-views): never call them "most viewed".
+One genre family among the many this skill edits: kinetic-type reels like **@metromedia.house, @earn.edits,
+@earnera.co and @lightyear.residency**. Use this file when the chosen style is kinetic type (the user picked
+it, named one of these pages, or approved it from the style options). Do not default to it: a reel can just as
+well be a clean talking head, a documentary cut or a UGC ad. The opt-in rule set from the user's own project in
+this genre is `assets/presets/kinetic-essay.md`. Every number here was measured frame by frame on 12 of these
+reels (downloaded 2026-10-12, text heights in pixels, colours as saturated-pixel medians). Audio on those reels
+was not analysed, so every audio claim about them is unverified. Their posts were ranked by likes (Instagram
+hides views): never call them "most viewed".
 
 Reading key: **[MEASURED]** frame-measured on the reels; **[SECONDARY]** code/docs, not video;
 **[UNVERIFIED]** not confirmed.

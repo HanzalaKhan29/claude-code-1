@@ -68,6 +68,16 @@ def moov_first(path):
     return None
 
 
+def window_loudness(path, t, length):
+    """Integrated loudness of a short window, or None when the whole window is below the -70 LUFS gate."""
+    err = run(["ffmpeg", "-hide_banner", "-nostats", "-ss", f"{max(0.0, t):.3f}", "-t", f"{max(length, 0.4):.3f}",
+               "-i", path, "-vn", "-af", "ebur128", "-f", "null", "-"], check=False).stderr
+    m = re.findall(r"I:\s+(-?[\d.]+|-inf) LUFS", err)
+    if not m or m[-1] == "-inf" or float(m[-1]) <= -69.9:
+        return None
+    return float(m[-1])
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("video")
@@ -78,6 +88,12 @@ def main():
     ap.add_argument("--every", type=float, default=5.0)
     ap.add_argument("--safe", default=None, help="9:16 safe zone to draw: reels, reels-ad, tiktok, shorts, cross "
                     "(default: the --platform's zone, cross for youtube)")
+    ap.add_argument("--silence-at", default="",
+                    help="times (s) of deliberate dead stops where the WHOLE mix pauses (music stopped and the voice silent), "
+                         "e.g. '41.2,58'. Each 0.5 s window after them must sit "
+                         "at least --silence-lu below the programme loudness (catches long SFX/reverb tails)")
+    ap.add_argument("--silence-len", type=float, default=0.5)
+    ap.add_argument("--silence-lu", type=float, default=14.0)
     args = ap.parse_args()
     out = args.out or os.path.join(os.path.dirname(os.path.abspath(args.video)), "qa")
     os.makedirs(out, exist_ok=True)
@@ -99,6 +115,13 @@ def main():
         report("FAIL", f"{args.platform} needs vertical 9:16; file is {info.get('width')}x{info.get('height')}")
     if min(info.get("width", 0), info.get("height", 0)) < 1080:
         report("WARN", f"below 1080p ({info.get('width')}x{info.get('height')})")
+    size_mb = os.path.getsize(args.video) / 1e6
+    mbps = size_mb * 8 / max(info.get("duration") or 1, 0.1)
+    cap = 40 if min(info.get("width", 0), info.get("height", 0)) > 1440 else 16
+    report("PASS" if mbps <= cap else "WARN",
+           f"file {size_mb:.0f} MB, {mbps:.1f} Mbps overall (cap {cap} at this size"
+           + ("" if mbps <= cap else "; grain or noise is eating bits: re-encode with finish.py --crf 21-23, the "
+              "platform re-encodes anyway and a huge upload stalls or gets rejected)") + ")")
     mf = moov_first(args.video)
     report("PASS" if mf else "WARN", "faststart (moov atom before media data, plays before full download)"
            + ("" if mf is not None else ": could not read the atom layout"))
@@ -117,6 +140,18 @@ def main():
             report("WARN", "true peak could not be measured: NOT verified")
         if info.get("channels") == 1:
             report("WARN", "mono audio: fine for voice-only, but a stereo music bed was collapsed if one was used")
+        for t in [float(x) for x in args.silence_at.split(",") if x.strip()]:
+            w = window_loudness(args.video, t, args.silence_len)
+            if i_l is None:
+                report("WARN", f"dead stop at {t:.2f}s not verified (programme loudness unknown)")
+            elif w is None:
+                report("PASS", f"dead stop at {t:.2f}s: window below the gate (true silence)")
+            else:
+                gap = i_l - w
+                report("PASS" if gap >= args.silence_lu else "FAIL",
+                       f"dead stop at {t:.2f}s: window {w:.1f} LUFS, {gap:.1f} LU under the programme "
+                       f"(need {args.silence_lu:.0f})" + ("" if gap >= args.silence_lu else
+                       ": a long hit or reverb tail is filling the silence; shorten or fade the SFX before the stop"))
         gaps = [s for s in silences(args.video, -45, 1.2) if s[0] > 0.5 and s[1] < info["duration"] - 0.5]
         report("PASS" if not gaps else "WARN", f"dead air >1.2s: {len(gaps)}"
                + (" at " + ", ".join(f"{a:.1f}s" for a, _ in gaps[:10]) if gaps else ""))

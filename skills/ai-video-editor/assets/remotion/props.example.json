@@ -1,0 +1,87 @@
+{
+ "video": "cut.mp4",
+ "durationInSeconds": null,
+ "width": 1080,
+ "height": 1920,
+ "fps": 30,
+ "platform": "reels",
+ "words": [
+  {
+   "text": "Today",
+   "start": 0.08,
+   "end": 0.358
+  },
+  {
+   "text": "I",
+   "start": 0.389,
+   "end": 0.481
+  },
+  {
+   "text": "will",
+   "start": 0.492,
+   "end": 0.723
+  },
+  {
+   "text": "show",
+   "start": 0.749,
+   "end": 0.981
+  },
+  {
+   "text": "you",
+   "start": 1.006,
+   "end": 1.192
+  },
+  {
+   "text": "how",
+   "start": 1.212,
+   "end": 1.398
+  }
+ ],
+ "keywords": [
+  "edit",
+  "video",
+  "captions"
+ ],
+ "captions": {
+  "enabled": true,
+  "font": "Inter",
+  "weight": 900,
+  "sizePct": 4.8,
+  "color": "#FFFFFF",
+  "accent": "#FFD84D",
+  "highlight": "key",
+  "maxWords": 3,
+  "yPct": 62,
+  "uppercase": false,
+  "hookUntil": 1.5
+ },
+ "graphics": [
+  {
+   "type": "title",
+   "at": 0.1,
+   "duration": 1.4,
+   "text": "Hook title\nfrom the VO"
+  },
+  {
+   "type": "stat",
+   "at": 2.0,
+   "duration": 2.5,
+   "from": 0,
+   "to": 1250,
+   "suffix": "+",
+   "label": "label from the transcript"
+  },
+  {
+   "type": "image",
+   "at": 4.6,
+   "duration": 2.0,
+   "src": "photo.jpg",
+   "mode": "card",
+   "aspect": 1.3333
+  }
+ ],
+ "texture": "none",
+ "accent": "#FFD84D",
+ "showSafeZone": false,
+ "textOnly": false
+}

@@ -12,9 +12,12 @@ Rule: <what to do or never do, specific and measurable>
 Why: <the user's reason, in their words if possible>
 Example: <timestamp + what was wrong + what fixed it>
 Applies to: <all videos | Shorts | long-form | captions | graphics | sound>
+Style: <universal | the style or preset it belongs to>
 ```
 
-Keep rules general enough to apply to the next video, not a fix for one frame. If a new note contradicts an
+Keep rules general enough to apply to the next video, not a fix for one frame. Ask whether a rule is universal
+or belongs to one style; style rules go into that style's preset (`assets/presets/`) or style card instead, so
+one project's look never becomes every project's default. If a new note contradicts an
 old rule, ask which one wins and update the old rule instead of stacking both.
 
 ---
